@@ -1,0 +1,14 @@
+{
+  "backgroundColor": "#07151D",
+  "updatedAt": "2026-08-09T21:04:08.133Z",
+  "iconHasTransparency": true,
+  "source": {
+    "icon": "branding/icon-source.png",
+    "splash": "branding/splash-source.png"
+  },
+  "generated": {
+    "appIcon": "assets/images/ops-app-icon.png",
+    "adaptiveForeground": "assets/images/ops-android-icon-foreground.png",
+    "splash": "assets/images/ops-splash-icon.png"
+  }
+}

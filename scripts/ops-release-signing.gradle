@@ -1,0 +1,22 @@
+// Integración de firma Release administrada por Ops Control. No contiene secretos.
+def opsSigningValue = { String name ->
+    def value = System.getenv(name)
+    if (value == null || value.isEmpty()) throw new GradleException("Falta la variable protegida " + name)
+    return value
+}
+
+if (System.getenv("OPS_ANDROID_KEYSTORE")) {
+    android {
+        signingConfigs {
+            opsRelease {
+                storeFile file(opsSigningValue("OPS_ANDROID_KEYSTORE"))
+                storePassword opsSigningValue("OPS_ANDROID_STORE_PASSWORD")
+                keyAlias opsSigningValue("OPS_ANDROID_KEY_ALIAS")
+                keyPassword opsSigningValue("OPS_ANDROID_KEY_PASSWORD")
+            }
+        }
+        buildTypes {
+            release { signingConfig signingConfigs.opsRelease }
+        }
+    }
+}

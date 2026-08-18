@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="wasapeame-green" x1="110" y1="400" x2="402" y2="108" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#059669"/>
+      <stop offset="1" stop-color="#34D399"/>
+    </linearGradient>
+  </defs>
+  <path d="M389 324a170 170 0 0 1-233 59l-80 25 25-78A170 170 0 0 1 354 112" stroke="url(#wasapeame-green)" stroke-width="42" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="m160 277 42 76 54-151 47 107L412 126" stroke="url(#wasapeame-green)" stroke-width="42" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="m353 131 67-17-14 69" fill="url(#wasapeame-green)" stroke="url(#wasapeame-green)" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+

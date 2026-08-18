@@ -1,0 +1,139 @@
+{
+  "expo": {
+    "name": "Wasapea.me",
+    "slug": "wasapeame",
+    "version": "1.3.2",
+    "orientation": "portrait",
+    "icon": "./assets/images/ops-app-icon.png",
+    "scheme": "wasapeame",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.wasapeame.app",
+      "infoPlist": {
+        "NSContactsUsageDescription": "Wasapea.me necesita acceso a tus contactos solo si decides guardar un número o importar un contacto a la agenda."
+      }
+    },
+    "android": {
+      "package": "com.wasapeame.app",
+      "icon": "./assets/images/ops-app-icon.png",
+      "adaptiveIcon": {
+        "backgroundColor": "#07151D",
+        "foregroundImage": "./assets/images/ops-android-icon-foreground.png"
+      },
+      "permissions": [
+        "READ_CONTACTS",
+        "WRITE_CONTACTS",
+        "POST_NOTIFICATIONS",
+        "READ_CONTACTS",
+        "WRITE_CONTACTS",
+        "POST_NOTIFICATIONS",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_VISUAL_USER_SELECTED",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_CONTACTS",
+        "android.permission.WRITE_CONTACTS"
+      ],
+      "versionCode": 13
+    },
+    "web": {
+      "output": "single",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#07151D",
+          "image": "./assets/images/ops-splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "dark": {
+            "backgroundColor": "#07151D",
+            "image": "./assets/images/ops-splash-icon.png"
+          }
+        }
+      ],
+      "expo-sqlite",
+      "expo-image",
+      "expo-sharing",
+      [
+        "react-native-share",
+        {
+          "ios": [
+            "whatsapp"
+          ],
+          "android": [
+            "com.whatsapp",
+            "com.whatsapp.w4b"
+          ]
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Wasapea.me solo accede a tus fotos cuando decides guardar una tarjeta QR.",
+          "savePhotosPermission": "Permite a Wasapea.me guardar la tarjeta QR en tu galería.",
+          "granularPermissions": [
+            "photo"
+          ]
+        }
+      ],
+      "expo-secure-store",
+      [
+        "expo-contacts",
+        {
+          "contactsPermission": "Wasapea.me necesita acceso a tus contactos solo para guardarlos o importarlos."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Wasapea.me usa tu ubicación cuando decides enviar tu posición actual o iniciar una transmisión en vivo.",
+          "locationAlwaysPermission": "Wasapea.me mantiene la ubicación activa solo durante una transmisión en vivo que tú inicias.",
+          "locationAlwaysAndWhenInUsePermission": "Wasapea.me mantiene la ubicación activa solo durante una transmisión en vivo que tú inicias.",
+          "motionUsagePermission": false,
+          "isIosBackgroundLocationEnabled": true,
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true,
+          "isAndroidMotionActivityEnabled": false
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Wasapea.me usa la cámara cuando decides fotografiar un contacto, vehículo o placa.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false,
+          "barcodeScannerEnabled": false
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Wasapea.me accede a tus fotos solo cuando eliges una imagen para un contacto o un viaje.",
+          "cameraPermission": "Wasapea.me usa la cámara solo cuando decides tomar una fotografía.",
+          "microphonePermission": false
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "db79fb52-fcbf-45d9-858b-78845d93c635"
+      }
+    },
+    "owner": "joelchino",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/db79fb52-fcbf-45d9-858b-78845d93c635"
+    }
+  }
+}

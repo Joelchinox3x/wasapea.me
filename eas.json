@@ -1,0 +1,38 @@
+{
+  "cli": {
+    "version": ">= 21.7.1",
+    "appVersionSource": "local"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "withoutCredentials": true,
+      "channel": "development",
+      "env": {
+        "EXPO_PUBLIC_SAFE_SERVER_URL": "https://safe.boxtiove.com",
+        "EXPO_PUBLIC_BOT_SERVER_URL": "https://bot.boxtiove.com",
+        "OPS_EXPO_DEV_CLIENT_URL": "http://181.64.197.85:8081"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "credentialsSource": "local",
+      "channel": "preview",
+      "env": {
+        "EXPO_PUBLIC_SAFE_SERVER_URL": "https://safe.boxtiove.com"
+      }
+    },
+    "production": {
+      "autoIncrement": false,
+      "credentialsSource": "local",
+      "channel": "production",
+      "env": {
+        "EXPO_PUBLIC_SAFE_SERVER_URL": "https://safe.boxtiove.com"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}
