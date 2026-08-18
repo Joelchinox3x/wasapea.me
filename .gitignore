@@ -3,11 +3,14 @@
 # dependencies
 node_modules/
 
-# Expo
+# Expo & Builds
 .expo/
 dist/
 web-build/
 expo-env.d.ts
+tmp/
+*.log
+*.tmp
 
 # Native
 .kotlin/
@@ -18,6 +21,8 @@ expo-env.d.ts
 *.key
 *.mobileprovision
 /credentials.json
+/ios
+/android
 
 # Metro
 .metro-health-check*
@@ -27,18 +32,21 @@ npm-debug.*
 yarn-debug.*
 yarn-error.*
 
-# macOS
+# macOS & Editors
 .DS_Store
 *.pem
+.vscode/
+.claude/
+.idea/
 
 # local env files
+.env
 .env*.local
+.env.production
+.env.staging
 
 # typescript
 *.tsbuildinfo
 
 example
 
-# generated native folders
-/ios
-/android
