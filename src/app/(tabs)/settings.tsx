@@ -3,8 +3,8 @@ import { ScrollView, StyleSheet, Text, useColorScheme, View } from "react-native
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AppearanceSettings } from "../../components/settings/AppearanceSettings";
 import { AppVersionSettings } from "../../components/settings/AppVersionSettings";
-import { AutoResponderSettingsModal } from "../../components/settings/AutoResponderSettingsModal";
 import { BackupImportModal } from "../../components/settings/BackupImportModal";
+
 import { DataBackupSettings } from "../../components/settings/DataBackupSettings";
 import { PreferencesSettings } from "../../components/settings/PreferencesSettings";
 import { PrivacyAboutSettings } from "../../components/settings/PrivacyAboutSettings";
@@ -112,9 +112,8 @@ export default function SettingsScreen() {
           onLogHistoryChange={setLogHistoryEnabled}
         />
 
-        <AutoResponderSettingsModal colors={colors} />
-
         <AppearanceSettings mode={themeMode} colors={colors} onChange={setThemeMode} />
+
 
         {hasProAccess(appMode) && (
           <DataBackupSettings
