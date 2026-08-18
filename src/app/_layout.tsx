@@ -10,7 +10,9 @@ import { useColorScheme } from "react-native";
 import { AppToastHost } from "../components/AppToastHost";
 import { BrandedSplash } from "../components/BrandedSplash";
 import { DatabaseRecoveryScreen } from "../components/DatabaseRecoveryScreen";
+import { ModeTransitionOverlay } from "../components/ModeTransitionOverlay";
 import { NoticeModal } from "../components/NoticeModal";
+
 import { initDatabase } from "../database/db";
 import { useAppStore } from "../store/useAppStore";
 import { darkColors, lightColors } from "../theme/colors";
@@ -31,7 +33,9 @@ export default function RootLayout() {
   });
   const colorScheme = useColorScheme();
   const themeMode = useAppStore((state) => state.themeMode);
+  const appMode = useAppStore((state) => state.appMode);
   const appModeHydrated = useAppStore((state) => state.appModeHydrated);
+
   const hydrateAppMode = useAppStore((state) => state.hydrateAppMode);
   const notice = useAppStore((state) => state.notice);
   const hideNotice = useAppStore((state) => state.hideNotice);
@@ -103,7 +107,9 @@ export default function RootLayout() {
         <Stack.Screen name="pro" options={{ headerShown: false, presentation: "modal" }} />
       </Stack>
       <AppToastHost />
+      <ModeTransitionOverlay mode={appMode} isDark={isDark} />
       <NoticeModal
+
         visible={notice !== null}
         title={notice?.title || ""}
         message={notice?.message || ""}
