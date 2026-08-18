@@ -119,6 +119,7 @@ export default function TabsLayout() {
         name="share"
         options={{
           title: "Mensajes",
+          href: hasProAccess(appMode) ? undefined : null,
           tabBarIcon: ({ color, focused }) => (
             <TabIcon focused={focused} label="Mensajes" color={String(color)} colors={colors} icon={Send} />
           )
@@ -128,11 +129,13 @@ export default function TabsLayout() {
         name="history"
         options={{
           title: "Historial",
+          href: hasProAccess(appMode) ? undefined : null,
           tabBarIcon: ({ color, focused }) => (
             <TabIcon focused={focused} label="Historial" color={String(color)} colors={colors} icon={Clock} />
           )
         }}
       />
+
       <Tabs.Screen
         name="agenda/index"
         options={{

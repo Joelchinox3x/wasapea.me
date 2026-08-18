@@ -425,8 +425,10 @@ export default function HomeScreen() {
           isDark={isDark}
         />
 
-        <HomeQuickAccessSection
-          recentItems={recent.items}
+        {hasProAccess(appMode) && (
+          <HomeQuickAccessSection
+            recentItems={recent.items}
+
           latestActions={recent.latestActions}
           contacts={quickAccess.contacts}
           templates={homeTemplates}
@@ -504,7 +506,9 @@ export default function HomeScreen() {
             void MessageTemplateRepository.toggleFavorite(template.id).then(quickAccess.reload);
           }}
         />
+        )}
       </ScrollView>
+
 
       <CountrySelectorModal
         visible={countryModalVisible}
