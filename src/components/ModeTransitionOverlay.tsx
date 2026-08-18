@@ -40,7 +40,8 @@ export function ModeTransitionOverlay({ mode, isDark }: ModeTransitionOverlayPro
 
   const isVip = activeBanner.mode === "vip";
   const isPro = activeBanner.mode === "pro";
-  const modeColor = isVip ? colors.warning : isPro ? colors.primary : colors.success;
+  const modeColor = isVip ? colors.warning : isPro ? colors.accent : colors.primary;
+
 
   return (
     <View style={styles.overlayContainer} pointerEvents="none">
