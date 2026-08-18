@@ -83,9 +83,10 @@ export default function TabsLayout() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.subtext,
         tabBarStyle: {
+          display: hasProAccess(appMode) ? "flex" : "none",
           backgroundColor: "transparent",
           borderTopWidth: 0,
-          height: 70 + bottomInset,
+          height: hasProAccess(appMode) ? 70 + bottomInset : 0,
           paddingTop: 12,
           paddingBottom: bottomInset,
           elevation: 0,
@@ -96,13 +97,15 @@ export default function TabsLayout() {
         },
         tabBarItemStyle: styles.tabBarItem,
         tabBarBackground: () => (
-          <BlurView
-            blurTarget={activeBlurTarget}
-            tint={isDark ? "dark" : "light"}
-            intensity={72}
-            blurMethod="dimezisBlurViewSdk31Plus"
-            style={[StyleSheet.absoluteFill, { backgroundColor: colors.navBackground }]}
-          />
+          hasProAccess(appMode) ? (
+            <BlurView
+              blurTarget={activeBlurTarget}
+              tint={isDark ? "dark" : "light"}
+              intensity={72}
+              blurMethod="dimezisBlurViewSdk31Plus"
+              style={[StyleSheet.absoluteFill, { backgroundColor: colors.navBackground }]}
+            />
+          ) : null
         )
       }}
     >
@@ -135,7 +138,6 @@ export default function TabsLayout() {
           )
         }}
       />
-
       <Tabs.Screen
         name="agenda/index"
         options={{
@@ -150,11 +152,13 @@ export default function TabsLayout() {
         name="settings"
         options={{
           title: "Ajustes",
+          href: hasProAccess(appMode) ? undefined : null,
           tabBarIcon: ({ color, focused }) => (
             <TabIcon focused={focused} label="Ajustes" color={String(color)} colors={colors} icon={Settings} />
           )
         }}
       />
+
     </Tabs>
   );
 }
