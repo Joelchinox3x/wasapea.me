@@ -23,6 +23,16 @@
         "EXPO_PUBLIC_SAFE_SERVER_URL": "https://safe.boxtiove.com"
       }
     },
+    "preview-simulator": {
+      "distribution": "internal",
+      "channel": "preview",
+      "ios": {
+        "simulator": true
+      },
+      "env": {
+        "EXPO_PUBLIC_SAFE_SERVER_URL": "https://safe.boxtiove.com"
+      }
+    },
     "production": {
       "autoIncrement": false,
       "credentialsSource": "remote",

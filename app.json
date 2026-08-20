@@ -11,6 +11,7 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.wasapeame.app",
       "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
         "NSContactsUsageDescription": "Wasapea.me necesita acceso a tus contactos solo si decides guardar un número o importar un contacto a la agenda."
       }
     },
