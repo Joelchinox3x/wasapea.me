@@ -19,6 +19,7 @@ import { ConfirmationModal } from "../../components/ConfirmationModal";
 import { ScalePressable } from "../../components/ScalePressable";
 import { WhatsAppGlyphIcon } from "../../components/icons/AppSvgIcons";
 import { MessageTemplateCard } from "../../components/messages/MessageTemplateCard";
+import { AppointmentTemplateModal } from "../../components/messages/AppointmentTemplateModal";
 import { LocationShareModal } from "../../components/messages/LocationShareModal";
 import { MessageTemplateModal } from "../../components/messages/MessageTemplateModal";
 import { isAppointmentMessageTemplate, LOCATION_MESSAGE_TEMPLATE_ID } from "../../constants/messageTemplates";
@@ -38,10 +39,13 @@ import { emeraldGlow, fonts, radius, spacing } from "../../theme/designSystem";
 export default function ShareMessageScreen() {
   const colorScheme = useColorScheme();
   const { width } = useWindowDimensions();
-  const { themeMode, showNotice, showToast } = useAppStore();
+  const { themeMode, showNotice, showToast, templateDensity } = useAppStore();
   const isDark = themeMode === "dark" || (themeMode === "system" && colorScheme === "dark");
   const colors = isDark ? darkColors : lightColors;
-  const carouselCardWidth = Math.min(176, Math.max(156, width * 0.44));
+
+  const carouselCardWidth = useMemo(() => {
+    return Math.min(176, Math.max(156, width * 0.44));
+  }, [width]);
 
   const [message, setMessage] = useState("");
   const [templates, setTemplates] = useState<MessageTemplateItem[]>([]);
@@ -52,6 +56,7 @@ export default function ShareMessageScreen() {
   const [editorInitialContent, setEditorInitialContent] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<MessageTemplateItem | null>(null);
   const [locationModalVisible, setLocationModalVisible] = useState(false);
+  const [appointmentTemplate, setAppointmentTemplate] = useState<MessageTemplateItem | null>(null);
   const [activeLiveSession, setActiveLiveSession] = useState<ActiveLiveLocationSession | null>(null);
 
   const loadTemplates = useCallback(async () => {
@@ -81,9 +86,20 @@ export default function ShareMessageScreen() {
     [selectedTemplateId, templates]
   );
   const generalTemplates = useMemo(
-    () => templates.filter((template) => !isAppointmentMessageTemplate(template.id)),
+    () =>
+      templates.filter(
+        (template) => template.id !== LOCATION_MESSAGE_TEMPLATE_ID
+      ),
     [templates]
   );
+  const gridPageSize = templateDensity === "grid2x3" ? 6 : 4;
+  const gridPages = useMemo(() => {
+    const pages: MessageTemplateItem[][] = [];
+    for (let i = 0; i < generalTemplates.length; i += gridPageSize) {
+      pages.push(generalTemplates.slice(i, i + gridPageSize));
+    }
+    return pages;
+  }, [generalTemplates, gridPageSize]);
   const hasMessage = message.trim().length > 0;
 
   const markTemplateUsed = useCallback(async (templateId = selectedTemplateId) => {
@@ -217,14 +233,9 @@ export default function ShareMessageScreen() {
   };
 
   return (
-    <SafeAreaView edges={["top", "left", "right"]} style={[styles.safeArea, { backgroundColor: colors.background }]}> 
+    <SafeAreaView edges={["top", "left", "right"]} style={[styles.safeArea, { backgroundColor: colors.background }]}>
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-        <ScrollView
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="on-drag"
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.page}
-        >
+        <View style={styles.page}>
           <View style={styles.header}>
             <View style={styles.headerCopy}>
               <Text style={[styles.title, { color: colors.primary }]}>Mensajes</Text>
@@ -240,10 +251,10 @@ export default function ShareMessageScreen() {
             </ScalePressable>
           </View>
 
-          <View style={[styles.composer, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}> 
+          <View style={[styles.composer, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
             <View style={styles.composerHeader}>
               <View style={styles.composerTitleRow}>
-                <View style={[styles.composerIcon, { backgroundColor: colors.primary + "1F" }]}> 
+                <View style={[styles.composerIcon, { backgroundColor: colors.primary + "1F" }]}>
                   <Sparkles size={18} color={colors.primary} />
                 </View>
                 <View style={styles.composerCopy}>
@@ -319,62 +330,118 @@ export default function ShareMessageScreen() {
             </View>
           </View>
 
-          <View style={styles.templatesHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Plantillas</Text>
-            <View style={[styles.countBadge, { backgroundColor: colors.primary + "18" }]}> 
-              <Text style={[styles.countText, { color: colors.primary }]}>{generalTemplates.length}</Text>
-            </View>
-          </View>
-
           {loading ? (
             <ActivityIndicator color={colors.primary} style={styles.loader} />
           ) : generalTemplates.length > 0 ? (
-            <ScrollView
-              horizontal
-              nestedScrollEnabled
-              showsHorizontalScrollIndicator={false}
-              decelerationRate="fast"
-              snapToAlignment="start"
-              snapToInterval={carouselCardWidth + spacing.sm}
-              contentContainerStyle={styles.templateCarousel}
-            >
-              {generalTemplates.map((template) => (
-                <MessageTemplateCard
-                  key={template.id}
-                  width={carouselCardWidth}
-                  template={template}
-                  colors={colors}
-                  selected={selectedTemplateId === template.id}
-                  onUse={() => {
-                    if (template.id === LOCATION_MESSAGE_TEMPLATE_ID) {
+            templateDensity === "grid2x2" || templateDensity === "grid2x3" ? (
+              <ScrollView
+                horizontal
+                pagingEnabled
+                nestedScrollEnabled
+                showsHorizontalScrollIndicator={false}
+                decelerationRate="fast"
+                snapToAlignment="start"
+                snapToInterval={width - spacing.md * 2}
+                contentContainerStyle={styles.gridCarouselContainer}
+              >
+                {gridPages.map((pageTemplates, pageIdx) => (
+                  <View key={pageIdx} style={[styles.gridPage, { width: width - spacing.md * 2 }]}>
+                    {pageTemplates.map((template) => (
+                      <View
+                        key={template.id}
+                        style={templateDensity === "grid2x3" ? styles.grid2x3Wrapper : styles.grid2x2Wrapper}
+                      >
+                        <MessageTemplateCard
+                          template={template}
+                          colors={colors}
+                          selected={selectedTemplateId === template.id}
+                          density={templateDensity}
+                          onUse={() => {
+                            if (template.id === LOCATION_MESSAGE_TEMPLATE_ID) {
+                              setSelectedTemplateId(template.id);
+                              setLocationModalVisible(true);
+                              return;
+                            }
+                            if (isAppointmentMessageTemplate(template.id)) {
+                              setMessage(template.content);
+                              setSelectedTemplateId(template.id);
+                              setAppointmentTemplate(template);
+                              return;
+                            }
+                            setMessage(template.content);
+                            setSelectedTemplateId(template.id);
+                          }}
+                          onToggleFavorite={async () => {
+                            await MessageTemplateRepository.toggleFavorite(template.id);
+                            await loadTemplates();
+                          }}
+                          onEdit={() => {
+                            setEditorTemplate(template);
+                            setEditorInitialContent("");
+                            setEditorVisible(true);
+                          }}
+                          onDelete={() => setDeleteTarget(template)}
+                        />
+                      </View>
+                    ))}
+                  </View>
+                ))}
+              </ScrollView>
+            ) : (
+              <ScrollView
+                horizontal
+                nestedScrollEnabled
+                showsHorizontalScrollIndicator={false}
+                decelerationRate="fast"
+                snapToAlignment="start"
+                snapToInterval={carouselCardWidth + spacing.sm}
+                contentContainerStyle={styles.templateCarousel}
+              >
+                {generalTemplates.map((template) => (
+                  <MessageTemplateCard
+                    key={template.id}
+                    width={carouselCardWidth}
+                    density={templateDensity}
+                    template={template}
+                    colors={colors}
+                    selected={selectedTemplateId === template.id}
+                    onUse={() => {
+                      if (template.id === LOCATION_MESSAGE_TEMPLATE_ID) {
+                        setSelectedTemplateId(template.id);
+                        setLocationModalVisible(true);
+                        return;
+                      }
+                      if (isAppointmentMessageTemplate(template.id)) {
+                        setMessage(template.content);
+                        setSelectedTemplateId(template.id);
+                        setAppointmentTemplate(template);
+                        return;
+                      }
+                      setMessage(template.content);
                       setSelectedTemplateId(template.id);
-                      setLocationModalVisible(true);
-                      return;
-                    }
-                    setMessage(template.content);
-                    setSelectedTemplateId(template.id);
-                  }}
-                  onToggleFavorite={async () => {
-                    await MessageTemplateRepository.toggleFavorite(template.id);
-                    await loadTemplates();
-                  }}
-                  onEdit={() => {
-                    setEditorTemplate(template);
-                    setEditorInitialContent("");
-                    setEditorVisible(true);
-                  }}
-                  onDelete={() => setDeleteTarget(template)}
-                />
-              ))}
-            </ScrollView>
+                    }}
+                    onToggleFavorite={async () => {
+                      await MessageTemplateRepository.toggleFavorite(template.id);
+                      await loadTemplates();
+                    }}
+                    onEdit={() => {
+                      setEditorTemplate(template);
+                      setEditorInitialContent("");
+                      setEditorVisible(true);
+                    }}
+                    onDelete={() => setDeleteTarget(template)}
+                  />
+                ))}
+              </ScrollView>
+            )
           ) : (
-            <View style={[styles.emptyState, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}> 
+            <View style={[styles.emptyState, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
               <FileText size={30} color={colors.subtext} />
               <Text style={[styles.emptyTitle, { color: colors.text }]}>No hay plantillas aquí</Text>
               <Text style={[styles.emptySubtitle, { color: colors.subtext }]}>Crea una plantilla para reutilizar tus mensajes.</Text>
             </View>
           )}
-        </ScrollView>
+        </View>
       </KeyboardAvoidingView>
 
       {editorVisible && (
@@ -407,6 +474,22 @@ export default function ShareMessageScreen() {
         onCancel={() => setDeleteTarget(null)}
         onConfirm={() => void handleDeleteTemplate()}
       />
+
+      {appointmentTemplate && (
+        <AppointmentTemplateModal
+          visible
+          colors={colors}
+          template={appointmentTemplate}
+          onClose={() => setAppointmentTemplate(null)}
+          onSend={async (preparedMessage, templateItem, recipient) => {
+            setMessage(preparedMessage);
+            setAppointmentTemplate(null);
+            await markTemplateUsed(templateItem.id);
+            showToast({ message: `Cita lista para enviar a ${recipient.name}.`, tone: "success" });
+            return true;
+          }}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -414,7 +497,7 @@ export default function ShareMessageScreen() {
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   flex: { flex: 1 },
-  page: { paddingHorizontal: spacing.md, paddingTop: spacing.sm, paddingBottom: spacing.xs },
+  page: { flex: 1, paddingHorizontal: spacing.md, paddingTop: spacing.xs, paddingBottom: 0 },
   header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: spacing.sm },
   headerCopy: { flex: 1, paddingRight: spacing.sm },
   title: { fontFamily: fonts.displayBold, fontSize: 28 },
@@ -429,7 +512,7 @@ const styles = StyleSheet.create({
   composerTitle: { fontFamily: fonts.displaySemiBold, fontSize: 16 },
   composerSubtitle: { fontFamily: fonts.body, fontSize: 11, marginTop: 1 },
   clearButton: { width: 34, height: 34, borderRadius: radius.pill, alignItems: "center", justifyContent: "center", marginLeft: spacing.xs },
-  messageInput: { minHeight: 132, maxHeight: 240, borderRadius: radius.lg, borderWidth: 1, padding: spacing.sm, paddingBottom: 24, fontFamily: fonts.body, fontSize: 14, lineHeight: 21 },
+  messageInput: { height: 138, borderRadius: radius.lg, borderWidth: 1, padding: spacing.sm, paddingBottom: 24, fontFamily: fonts.body, fontSize: 14, lineHeight: 21 },
   characterCount: { alignSelf: "flex-end", fontFamily: fonts.body, fontSize: 10.5, marginTop: -19, marginRight: 9, marginBottom: spacing.sm },
   whatsappButton: { minHeight: 56, borderRadius: radius.lg, paddingHorizontal: spacing.md, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: spacing.sm },
   whatsappCopy: { alignItems: "flex-start" },
@@ -443,9 +526,14 @@ const styles = StyleSheet.create({
   sectionTitle: { fontFamily: fonts.displayBold, fontSize: 20 },
   countBadge: { minWidth: 30, height: 26, borderRadius: radius.pill, alignItems: "center", justifyContent: "center", paddingHorizontal: 8 },
   countText: { fontFamily: fonts.displaySemiBold, fontSize: 13 },
-  templateCarousel: { paddingRight: spacing.md },
-  loader: { marginVertical: spacing.xl },
-  emptyState: { borderRadius: radius.lg, borderWidth: 1, alignItems: "center", padding: spacing.lg },
+  templateCarousel: { marginTop: spacing.xs, paddingRight: spacing.md },
+  gridCarouselContainer: { marginTop: spacing.xs },
+  gridPage: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
+  gridContainer: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: spacing.xs },
+  grid2x2Wrapper: { width: "48.5%" },
+  grid2x3Wrapper: { width: "31.5%" },
+  loader: { marginVertical: spacing.md },
+  emptyState: { marginTop: spacing.xs, borderRadius: radius.lg, borderWidth: 1, alignItems: "center", padding: spacing.md },
   emptyTitle: { fontFamily: fonts.displaySemiBold, fontSize: 16, marginTop: spacing.sm },
   emptySubtitle: { fontFamily: fonts.body, fontSize: 12, textAlign: "center", marginTop: 3 }
 });

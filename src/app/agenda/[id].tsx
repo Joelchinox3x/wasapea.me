@@ -23,6 +23,7 @@ import { QrCodeModal } from "../../components/QrCodeModal";
 import { ReminderModal } from "../../components/ReminderModal";
 import { CategoryItemData, CategoryRepository } from "../../repositories/CategoryRepository";
 import { ContactRepository, InternalContact } from "../../repositories/ContactRepository";
+import { HistoryRepository } from "../../repositories/HistoryRepository";
 import { ContactReminder, ReminderRepository } from "../../repositories/ReminderRepository";
 import { CommunicationService } from "../../services/CommunicationService";
 import { useAppStore } from "../../store/useAppStore";
@@ -42,6 +43,22 @@ export default function ContactDetailScreen() {
   const [confirmDeleteVisible, setConfirmDeleteVisible] = useState(false);
   const [qrVisible, setQrVisible] = useState(false);
   const [reminderModalVisible, setReminderModalVisible] = useState(false);
+
+  const recordContactAction = async (actionType: "whatsapp" | "call" | "sms") => {
+    if (!contact) return;
+    try {
+      await HistoryRepository.logAction({
+        phoneE164: contact.phoneE164,
+        phoneFormatted: contact.phoneFormatted,
+        countryCode: contact.countryCode,
+        countryIso: contact.countryIso,
+        name: contact.name,
+        actionType
+      });
+    } catch {
+      /* ignore */
+    }
+  };
 
   const loadData = useCallback(async () => {
     if (!id) return;
@@ -183,7 +200,10 @@ export default function ContactDetailScreen() {
           <View style={styles.actionGrid}>
             <TouchableOpacity
               style={[styles.actBtn, { backgroundColor: colors.primary }]}
-              onPress={() => CommunicationService.openWhatsApp(contact.phoneE164)}
+              onPress={async () => {
+                await recordContactAction("whatsapp");
+                await CommunicationService.openWhatsApp(contact.phoneE164);
+              }}
             >
               <MessageCircle size={20} color="#FFFFFF" />
               <Text style={styles.actBtnText}>WhatsApp</Text>
@@ -191,7 +211,10 @@ export default function ContactDetailScreen() {
 
             <TouchableOpacity
               style={[styles.actBtn, { backgroundColor: colors.call }]}
-              onPress={() => CommunicationService.makeCall(contact.phoneE164)}
+              onPress={async () => {
+                await recordContactAction("call");
+                await CommunicationService.makeCall(contact.phoneE164);
+              }}
             >
               <Phone size={20} color="#FFFFFF" />
               <Text style={styles.actBtnText}>Llamar</Text>
@@ -199,7 +222,10 @@ export default function ContactDetailScreen() {
 
             <TouchableOpacity
               style={[styles.actBtn, { backgroundColor: colors.sms }]}
-              onPress={() => CommunicationService.sendSms(contact.phoneE164)}
+              onPress={async () => {
+                await recordContactAction("sms");
+                await CommunicationService.sendSms(contact.phoneE164);
+              }}
             >
               <MessageSquare size={20} color="#FFFFFF" />
               <Text style={styles.actBtnText}>SMS</Text>

@@ -27,10 +27,32 @@ interface VipBenefitsModalProps {
   colors: ThemeColors;
 }
 
-const benefits = [
-  "Todo lo incluido en Pro",
-  "Acceso preparado para próximas funciones VIP",
-  "Activación protegida en este dispositivo"
+const upcomingFeatures = [
+  {
+    icon: "📍",
+    title: "Ubicación en Tiempo Real Guardada",
+    desc: "Guarda y consulta el historial de ubicación en tiempo real en la nube."
+  },
+  {
+    icon: "☁️",
+    title: "Contactos y Respaldo en la Nube",
+    desc: "Tus contactos e historial respaldados para no perder nada aunque pierdas el cel."
+  },
+  {
+    icon: "🤖",
+    title: "Mensajes Programados por WhatsApp",
+    desc: "Envío automático de mensajes y recordatorios en fechas y horas exactas."
+  },
+  {
+    icon: "📊",
+    title: "Métricas y Reportes Avanzados",
+    desc: "Estadísticas detalladas de interacciones y frecuencia de envíos."
+  },
+  {
+    icon: "💎",
+    title: "Experiencia Dorada & Soporte 24/7",
+    desc: "Estilo visual VIP exclusivo, sin límites y atención prioritaria."
+  }
 ];
 
 export function VipBenefitsModal({ visible, active, onClose, onActivate, colors }: VipBenefitsModalProps) {
@@ -97,22 +119,28 @@ export function VipBenefitsModal({ visible, active, onClose, onActivate, colors 
                     <View style={[styles.activeBadge, { backgroundColor: colors.warning }]}> 
                       <Text style={styles.activeBadgeText}>ACTIVO</Text>
                     </View>
-                  ) : null}
+                  ) : (
+                    <View style={[styles.activeBadge, { backgroundColor: colors.primary + "22" }]}>
+                      <Text style={[styles.activeBadgeText, { color: colors.primary }]}>PRÓXIMAMENTE</Text>
+                    </View>
+                  )}
                 </View>
-                <Text style={[styles.subtitle, { color: colors.subtext }]}>Una experiencia dorada preparada para servicios exclusivos.</Text>
+                <Text style={[styles.subtitle, { color: colors.subtext }]}>Funciones doradas exclusivas y servicios avanzados en camino.</Text>
               </View>
               <ScalePressable onPress={closeSheet} style={[styles.closeButton, { backgroundColor: colors.badgeBg }]}> 
                 <X size={19} color={colors.subtext} />
               </ScalePressable>
             </View>
 
-            <View style={[styles.benefitCard, { backgroundColor: colors.warning + "0F", borderColor: colors.warning + "44" }]}> 
-              {benefits.map((benefit) => (
-                <View key={benefit} style={styles.benefitRow}>
-                  <View style={[styles.checkShell, { backgroundColor: colors.warning + "20" }]}> 
-                    <Sparkles size={14} color={colors.warning} />
+            <View style={[styles.benefitCard, { backgroundColor: colors.warning + "0A", borderColor: colors.warning + "33" }]}>
+              <Text style={[styles.upcomingHeaderTitle, { color: colors.warning }]}>✨ Próximas Funciones Exclusivas VIP:</Text>
+              {upcomingFeatures.map((item) => (
+                <View key={item.title} style={styles.benefitRow}>
+                  <Text style={{ fontSize: 16 }}>{item.icon}</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.benefitText, { color: colors.text }]}>{item.title}</Text>
+                    <Text style={[styles.benefitDesc, { color: colors.subtext }]}>{item.desc}</Text>
                   </View>
-                  <Text style={[styles.benefitText, { color: colors.text }]}>{benefit}</Text>
                 </View>
               ))}
             </View>
@@ -121,8 +149,8 @@ export function VipBenefitsModal({ visible, active, onClose, onActivate, colors 
               <View style={[styles.activePanel, { backgroundColor: colors.warning + "14", borderColor: colors.warning + "55" }]}> 
                 <Crown size={22} color={colors.warning} />
                 <View style={styles.activeCopy}>
-                  <Text style={[styles.activeTitle, { color: colors.text }]}>VIP está activo</Text>
-                  <Text style={[styles.activeText, { color: colors.subtext }]}>El encabezado y la etiqueta VIP ya usan el estilo dorado.</Text>
+                  <Text style={[styles.activeTitle, { color: colors.text }]}>¡Membresía VIP Activa!</Text>
+                  <Text style={[styles.activeText, { color: colors.subtext }]}>Tienes acceso a la insignia dorada y a todas las ventajas especiales.</Text>
                 </View>
               </View>
             ) : (
@@ -131,10 +159,10 @@ export function VipBenefitsModal({ visible, active, onClose, onActivate, colors 
                   <LockKeyhole size={19} color={colors.warning} />
                   <View style={styles.accessCopy}>
                     <Text style={[styles.accessTitle, { color: colors.text }]}> 
-                      Activar acceso VIP
+                      Activar membresía VIP
                     </Text>
                     <Text style={[styles.accessDescription, { color: colors.subtext }]}> 
-                      Escribe la clave válida que recibiste del administrador.
+                      Ingresa tu código de clave para activar el modo VIP.
                     </Text>
                   </View>
                 </View>
@@ -147,7 +175,7 @@ export function VipBenefitsModal({ visible, active, onClose, onActivate, colors 
                       setPassword(value);
                       setError("");
                     }}
-                    placeholder="Clave entregada por el administrador"
+                    placeholder="Ingresa clave promo..."
                     placeholderTextColor={colors.subtext}
                     secureTextEntry={!showPassword}
                     autoCapitalize="none"
@@ -176,10 +204,10 @@ export function VipBenefitsModal({ visible, active, onClose, onActivate, colors 
                   ]}
                 >
                   {busy ? <ActivityIndicator color="#111827" /> : <Crown size={20} color="#111827" />}
-                  <Text style={styles.actionText}>Validar y activar VIP</Text>
+                  <Text style={styles.actionText}>Activar VIP</Text>
                 </ScalePressable>
 
-                <Text style={[styles.localNote, { color: colors.subtext }]}>Solo las claves proporcionadas por el administrador pueden activar VIP.</Text>
+                <Text style={[styles.localNote, { color: colors.subtext }]}>Ingresa el código promocional para desbloquear el acceso VIP.</Text>
               </View>
             )}
 
@@ -206,10 +234,12 @@ const styles = StyleSheet.create({
   activeBadgeText: { color: "#111827", fontFamily: fonts.bodySemiBold, fontSize: 8.5, letterSpacing: 0.6 },
   subtitle: { fontFamily: fonts.body, fontSize: 11.5, lineHeight: 16, marginTop: 2 },
   closeButton: { width: 38, height: 38, borderRadius: radius.pill, alignItems: "center", justifyContent: "center" },
-  benefitCard: { borderRadius: radius.lg, borderWidth: 1, padding: spacing.sm, gap: 9, marginBottom: spacing.md },
-  benefitRow: { flexDirection: "row", alignItems: "center", gap: spacing.xs },
+  benefitCard: { borderRadius: radius.lg, borderWidth: 1, padding: spacing.sm, gap: 10, marginBottom: spacing.md },
+  upcomingHeaderTitle: { fontFamily: fonts.displayBold, fontSize: 13, marginBottom: 2 },
+  benefitRow: { flexDirection: "row", alignItems: "flex-start", gap: spacing.xs },
   checkShell: { width: 28, height: 28, borderRadius: radius.pill, alignItems: "center", justifyContent: "center" },
-  benefitText: { flex: 1, fontFamily: fonts.bodySemiBold, fontSize: 12.5 },
+  benefitText: { fontFamily: fonts.displaySemiBold, fontSize: 12.5 },
+  benefitDesc: { fontFamily: fonts.body, fontSize: 10.5, lineHeight: 14, marginTop: 1 },
   accessSection: { gap: spacing.xs },
   accessHeading: { flexDirection: "row", alignItems: "flex-start", gap: spacing.xs, marginBottom: 2 },
   accessCopy: { flex: 1 },
@@ -220,7 +250,7 @@ const styles = StyleSheet.create({
   errorText: { fontFamily: fonts.bodySemiBold, fontSize: 11.5, textAlign: "center" },
   actionButton: { minHeight: 50, borderRadius: radius.lg, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: spacing.xs, marginTop: 3 },
   actionText: { color: "#111827", fontFamily: fonts.displaySemiBold, fontSize: 14 },
-  localNote: { fontFamily: fonts.body, fontSize: 10.5, lineHeight: 15, textAlign: "center", paddingHorizontal: spacing.sm },
+  localNote: { fontFamily: fonts.body, fontSize: 10.5, lineHeight: 15, textAlign: "center", paddingHorizontal: spacing.sm, marginTop: 6 },
   activePanel: { borderRadius: radius.lg, borderWidth: 1, padding: spacing.md, flexDirection: "row", alignItems: "center", gap: spacing.sm },
   activeCopy: { flex: 1 },
   activeTitle: { fontFamily: fonts.displaySemiBold, fontSize: 15 },

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { ScrollView, StyleSheet, Text, useColorScheme, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppearanceSettings } from "../../components/settings/AppearanceSettings";
 import { AppVersionSettings } from "../../components/settings/AppVersionSettings";
 import { BackupImportModal } from "../../components/settings/BackupImportModal";
@@ -34,6 +34,10 @@ export default function SettingsScreen() {
     setAutoDetectClipboard,
     logHistoryEnabled,
     setLogHistoryEnabled,
+    templateDensity,
+    setTemplateDensity,
+    trustedContacts,
+    setTrustedContacts,
     showNotice
   } = useAppStore();
   const isDark = themeMode === "dark" || (themeMode === "system" && colorScheme === "dark");
@@ -83,9 +87,12 @@ export default function SettingsScreen() {
     }
   };
 
+  const insets = useSafeAreaInsets();
+  const dynamicBottomPadding = hasProAccess(appMode) ? 84 + insets.bottom : Math.max(insets.bottom + spacing.md, 36);
+
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={[styles.safeArea, { backgroundColor: colors.background }]}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: dynamicBottomPadding }]} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <Text style={[styles.title, { color: colors.primary }]}>Ajustes</Text>
           <Text style={[styles.subtitle, { color: colors.subtext }]}>Configura tu experiencia en {APP_NAME}</Text>
@@ -107,10 +114,14 @@ export default function SettingsScreen() {
           country={selectedCountry}
           autoDetectClipboard={autoDetectClipboard}
           logHistoryEnabled={logHistoryEnabled}
+          templateDensity={templateDensity}
           onCountryPress={() => setCountryModalVisible(true)}
           onAutoDetectChange={setAutoDetectClipboard}
           onLogHistoryChange={setLogHistoryEnabled}
+          onTemplateDensityChange={setTemplateDensity}
         />
+
+
 
         <AppearanceSettings mode={themeMode} colors={colors} onChange={setThemeMode} />
 

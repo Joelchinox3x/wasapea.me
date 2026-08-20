@@ -21,9 +21,7 @@ export const APPOINTMENT_MESSAGE_TEMPLATE_IDS = [
 ] as const;
 
 export function isAppointmentMessageTemplate(templateId: string): boolean {
-  return APPOINTMENT_MESSAGE_TEMPLATE_IDS.includes(
-    templateId as (typeof APPOINTMENT_MESSAGE_TEMPLATE_IDS)[number]
-  );
+  return templateId === HOME_APPOINTMENT_TEMPLATE_ID;
 }
 
 export const DEFAULT_MESSAGE_TEMPLATES: MessageTemplateItem[] = [

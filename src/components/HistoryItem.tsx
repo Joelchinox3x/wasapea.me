@@ -1,6 +1,8 @@
+import * as Haptics from "expo-haptics";
 import { Phone, Star, Trash2 } from "lucide-react-native";
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import Swipeable from "react-native-gesture-handler/Swipeable";
 import { POPULAR_COUNTRIES } from "../constants/app";
 import { PhoneHistoryEntry } from "../repositories/HistoryRepository";
 import { darkColors, lightColors } from "../theme/colors";
@@ -30,6 +32,8 @@ export function HistoryItem({
   isDark = false
 }: HistoryItemProps) {
   const colors = isDark ? darkColors : lightColors;
+  const swipeableRef = useRef<Swipeable>(null);
+  const autoCloseTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const country = POPULAR_COUNTRIES.find((c) => c.iso.toUpperCase() === entry.countryIso.toUpperCase());
   const flag = country?.flag || "🌐";
@@ -44,74 +48,124 @@ export function HistoryItem({
         ? colors.primary
         : colors.accent;
 
-  return (
-    <TouchableOpacity
-      activeOpacity={0.7}
-      onPress={onPress}
-      onLongPress={onLongPress}
-      delayLongPress={450}
-      accessibilityHint={onLongPress ? "Mantén presionado para ver más acciones" : undefined}
-      style={[styles.container, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
-    >
-      <View pointerEvents="none" style={[styles.actionAccent, { backgroundColor: actionColor }]} />
+  const triggerHaptic = () => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+  };
+
+  const clearAutoCloseTimer = () => {
+    if (autoCloseTimerRef.current) {
+      clearTimeout(autoCloseTimerRef.current);
+      autoCloseTimerRef.current = null;
+    }
+  };
+
+  const handleOpen = () => {
+    clearAutoCloseTimer();
+    autoCloseTimerRef.current = setTimeout(() => {
+      swipeableRef.current?.close();
+    }, 3500);
+  };
+
+  useEffect(() => {
+    return () => {
+      clearAutoCloseTimer();
+    };
+  }, []);
+
+  const renderRightActions = () => (
+    <View style={styles.rightSwipeActions}>
       <TouchableOpacity
-        onPress={onToggleFavorite}
-        style={[
-          styles.favoriteButton,
-          {
-            backgroundColor: entry.favorite === 1 ? `${colors.favorite}26` : colors.inputBg,
-            borderColor: entry.favorite === 1 ? `${colors.favorite}66` : colors.cardBorder
-          }
-        ]}
-        accessibilityLabel={entry.favorite === 1 ? "Quitar de favoritos" : "Agregar a favoritos"}
+        style={[styles.swipeBtn, { backgroundColor: colors.primary }]}
+        onPress={() => {
+          triggerHaptic();
+          swipeableRef.current?.close();
+          onWhatsApp();
+        }}
       >
-        <Star
-          size={14}
-          color={entry.favorite === 1 ? colors.favorite : colors.subtext}
-          fill={entry.favorite === 1 ? colors.favorite : "none"}
-        />
+        <WhatsAppGlyphIcon size={19} color="#FFFFFF" />
+        <Text style={styles.swipeBtnText}>WhatsApp</Text>
       </TouchableOpacity>
 
-      <View style={styles.left}>
-        <View
-          style={[
-            styles.avatar,
-            {
-              backgroundColor: colors.inputBg,
-              borderColor: colors.cardBorder
-            }
-          ]}
-        >
-          <Text style={hasContact ? [styles.initial, { color: colors.text }] : styles.flag}>
-            {hasContact ? initial : flag}
-          </Text>
-        </View>
-        <View style={styles.info}>
-          <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
-            {contactName || entry.phoneFormatted}
-          </Text>
-          {hasContact && (
-            <Text style={[styles.subtitle, { color: colors.subtext }]}>{entry.phoneFormatted}</Text>
-          )}
-        </View>
-      </View>
+      <TouchableOpacity
+        style={[styles.swipeBtn, { backgroundColor: colors.call }]}
+        onPress={() => {
+          triggerHaptic();
+          swipeableRef.current?.close();
+          onCall();
+        }}
+      >
+        <Phone size={17} color="#FFFFFF" />
+        <Text style={styles.swipeBtnText}>Llamar</Text>
+      </TouchableOpacity>
+    </View>
+  );
 
-      <View style={styles.actions}>
-        <TouchableOpacity
-          onPress={onWhatsApp}
-          style={[styles.quickBtn, { backgroundColor: colors.primary }]}
-          accessibilityLabel="Abrir WhatsApp"
-        >
-          <WhatsAppGlyphIcon size={17} color="#FFFFFF" />
-        </TouchableOpacity>
+  const renderLeftActions = () => (
+    <View style={styles.leftSwipeActions}>
+      <TouchableOpacity
+        style={[styles.swipeBtn, { backgroundColor: colors.favorite }]}
+        onPress={() => {
+          triggerHaptic();
+          swipeableRef.current?.close();
+          onToggleFavorite();
+        }}
+      >
+        <Star size={18} color="#FFFFFF" fill={entry.favorite === 1 ? "#FFFFFF" : "none"} />
+        <Text style={styles.swipeBtnText}>{entry.favorite === 1 ? "Quitar" : "Favorito"}</Text>
+      </TouchableOpacity>
+    </View>
+  );
 
-        <TouchableOpacity
-          onPress={onCall}
-          style={[styles.quickBtn, { backgroundColor: colors.call }]}
-          accessibilityLabel="Llamar"
-        >
-          <Phone size={16} color="#FFFFFF" />
-        </TouchableOpacity>
+  return (
+    <Swipeable
+      ref={swipeableRef}
+      renderRightActions={renderRightActions}
+      renderLeftActions={renderLeftActions}
+      onSwipeableOpen={handleOpen}
+      onSwipeableClose={clearAutoCloseTimer}
+      friction={1.6}
+      overshootRight={false}
+      overshootLeft={false}
+      containerStyle={styles.swipeableContainer}
+    >
+      <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={onPress}
+        onLongPress={onLongPress}
+        delayLongPress={450}
+        accessibilityHint={onLongPress ? "Mantén presionado para ver más acciones" : undefined}
+        style={[styles.container, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
+      >
+        <View pointerEvents="none" style={[styles.actionAccent, { backgroundColor: actionColor }]} />
+
+        <View style={styles.left}>
+          <View
+            style={[
+              styles.avatar,
+              {
+                backgroundColor: colors.inputBg,
+                borderColor: colors.cardBorder
+              }
+            ]}
+          >
+            <Text style={hasContact ? [styles.initial, { color: colors.text }] : styles.flag}>
+              {hasContact ? initial : flag}
+            </Text>
+          </View>
+          <View style={styles.info}>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
+                {contactName || entry.phoneFormatted}
+              </Text>
+              {entry.favorite === 1 && (
+                <Star size={13} color={colors.favorite} fill={colors.favorite} style={{ marginLeft: 4 }} />
+              )}
+            </View>
+            {hasContact && (
+              <Text style={[styles.subtitle, { color: colors.subtext }]}>{entry.phoneFormatted}</Text>
+            )}
+          </View>
+        </View>
 
         {onDelete && (
           <TouchableOpacity
@@ -122,8 +176,8 @@ export function HistoryItem({
             <Trash2 size={16} color={colors.subtext} />
           </TouchableOpacity>
         )}
-      </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
+    </Swipeable>
   );
 }
 
@@ -214,5 +268,37 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center"
+  },
+  swipeableContainer: {
+    marginBottom: 8
+  },
+  rightSwipeActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    marginBottom: 8,
+    gap: 6,
+    paddingLeft: 8
+  },
+  leftSwipeActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-start",
+    marginBottom: 8,
+    paddingRight: 8
+  },
+  swipeBtn: {
+    height: 74,
+    minWidth: 72,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 3,
+    paddingHorizontal: 12
+  },
+  swipeBtnText: {
+    color: "#FFFFFF",
+    fontSize: 10.5,
+    fontWeight: "700"
   }
 });

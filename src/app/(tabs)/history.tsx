@@ -1,7 +1,7 @@
 import { useFocusEffect, useRouter } from "expo-router";
-import { Clock, MessageSquareText, Phone, Star, Trash2 } from "lucide-react-native";
+import { Clock, Trash2 } from "lucide-react-native";
 import React, { useCallback, useMemo, useState } from "react";
-import { ScrollView, SectionList, StyleSheet, Text, TouchableOpacity, useColorScheme, View } from "react-native";
+import { SectionList, StyleSheet, Text, TouchableOpacity, useColorScheme, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ConfirmationModal } from "../../components/ConfirmationModal";
 import { EmptyState } from "../../components/EmptyState";
@@ -9,7 +9,6 @@ import { HistoryItem } from "../../components/HistoryItem";
 import { MoreActionsSheet } from "../../components/MoreActionsSheet";
 import { QrCodeModal } from "../../components/QrCodeModal";
 import { SearchInput } from "../../components/SearchInput";
-import { WhatsAppGlyphIcon } from "../../components/icons/AppSvgIcons";
 import { ContactRepository } from "../../repositories/ContactRepository";
 import { HistoryRepository, PhoneHistoryEntry } from "../../repositories/HistoryRepository";
 import { CommunicationService } from "../../services/CommunicationService";
@@ -18,16 +17,6 @@ import { useAppStore } from "../../store/useAppStore";
 import { darkColors, lightColors } from "../../theme/colors";
 import { fonts, radius, spacing } from "../../theme/designSystem";
 import { buildHistoryActionMaps, enrichHistoryWithContacts } from "../../utils/historyPresentation";
-
-type HistoryFilter = "all" | "whatsapp" | "call" | "sms" | "favorites";
-
-const FILTERS = [
-  { id: "all" as const, label: "Todos", icon: Clock },
-  { id: "whatsapp" as const, label: "WhatsApp", icon: WhatsAppGlyphIcon },
-  { id: "call" as const, label: "Llamadas", icon: Phone },
-  { id: "sms" as const, label: "SMS", icon: MessageSquareText },
-  { id: "favorites" as const, label: "Favoritos", icon: Star }
-];
 
 interface HistorySection {
   key: string;
@@ -65,7 +54,6 @@ export default function HistoryScreen() {
   const [latestActions, setLatestActions] = useState<Record<string, string>>({});
   const [hasAnyHistory, setHasAnyHistory] = useState(false);
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<HistoryFilter>("all");
   const [confirmClearVisible, setConfirmClearVisible] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [actionTarget, setActionTarget] = useState<PhoneHistoryEntry | null>(null);
@@ -103,24 +91,16 @@ export default function HistoryScreen() {
 
   useFocusEffect(useCallback(() => { void loadHistory(); }, [loadHistory]));
 
-  const filteredHistory = useMemo(() => historyList.filter((entry) => {
-    if (filter === "all") return true;
-    if (filter === "favorites") return entry.favorite === 1;
-    const types = actionTypes[entry.id] ?? [];
-    if (filter === "whatsapp") return types.includes("whatsapp") || types.includes("whatsapp_message");
-    return types.includes(filter);
-  }), [actionTypes, filter, historyList]);
-
   const sections = useMemo<HistorySection[]>(() => {
     const grouped = new Map<string, HistorySection>();
-    for (const entry of filteredHistory) {
+    for (const entry of historyList) {
       const key = localDayKey(entry.lastInteractionAt);
       const current = grouped.get(key);
       if (current) current.data.push(entry);
       else grouped.set(key, { key, title: sectionTitle(entry.lastInteractionAt), data: [entry] });
     }
     return [...grouped.values()];
-  }, [filteredHistory]);
+  }, [historyList]);
 
   const handleClearAll = async () => {
     await HistoryRepository.clearAll();
@@ -177,14 +157,10 @@ export default function HistoryScreen() {
     ? "No se pudo cargar el historial"
     : search.trim()
       ? "No encontramos coincidencias"
-      : filter === "favorites"
-        ? "No tienes favoritos guardados"
-        : filter === "all"
-          ? "Aún no hay historial"
-          : `No hay registros de ${FILTERS.find((item) => item.id === filter)?.label ?? "este tipo"}`;
+      : "Aún no hay historial";
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
+    <SafeAreaView edges={["top", "left", "right"]} style={[styles.safeArea, { backgroundColor: colors.background }]}>
       <View style={styles.container}>
         <View style={styles.header}>
           <View style={styles.headingCopy}>
@@ -205,49 +181,6 @@ export default function HistoryScreen() {
         </View>
 
         <SearchInput value={search} onChangeText={setSearch} placeholder="Buscar números o nombres..." isDark={isDark} />
-
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filters}
-          style={styles.filterScroll}
-        >
-          {FILTERS.map((item) => {
-            const selected = filter === item.id;
-            const Icon = item.icon;
-            const chipColor = item.id === "whatsapp"
-              ? colors.primary
-              : item.id === "call"
-                ? colors.call
-                : item.id === "sms"
-                  ? colors.sms
-                  : item.id === "favorites"
-                    ? colors.favorite
-                    : colors.accent;
-            return (
-              <TouchableOpacity
-                key={item.id}
-                onPress={() => setFilter(item.id)}
-                style={[
-                  styles.filterChip,
-                  {
-                    backgroundColor: selected ? chipColor : `${chipColor}14`,
-                    borderColor: selected ? chipColor : `${chipColor}66`
-                  }
-                ]}
-                accessibilityRole="button"
-                accessibilityState={{ selected }}
-              >
-                <Icon
-                  size={14}
-                  color={selected ? "#FFFFFF" : chipColor}
-                  fill={item.id === "favorites" && selected ? "#FFFFFF" : "none"}
-                />
-                <Text style={[styles.filterText, { color: selected ? "#FFFFFF" : chipColor }]}>{item.label}</Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
 
         <SectionList
           sections={sections}
@@ -293,9 +226,7 @@ export default function HistoryScreen() {
               title={emptyTitle}
               subtitle={loadError
                 ? `No se pudo cargar el historial: ${loadError}`
-                : filter === "favorites"
-                  ? "Marca números con la estrella para encontrarlos rápidamente."
-                  : "Prueba otro filtro o realiza una nueva interacción."}
+                : "Realiza una búsqueda o inicia un nuevo chat desde el Home."}
               isDark={isDark}
             />
           }

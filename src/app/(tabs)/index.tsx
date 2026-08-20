@@ -1,16 +1,18 @@
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Keyboard, ScrollView, StyleSheet, useColorScheme, useWindowDimensions } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Keyboard, ScrollView, StyleSheet, Text, useColorScheme, useWindowDimensions, View } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { CountrySelectorModal } from "../../components/CountrySelectorModal";
 import { MoreActionsSheet } from "../../components/MoreActionsSheet";
 import { PhoneActionButtons } from "../../components/PhoneActionButtons";
 import { QrCodeModal } from "../../components/QrCodeModal";
+import { ScalePressable } from "../../components/ScalePressable";
 import { VipBenefitsModal } from "../../components/VipBenefitsModal";
 import { ClipboardDetectionBanner } from "../../components/home/ClipboardDetectionBanner";
 import { HomeHeader } from "../../components/home/HomeHeader";
 import { HomeQuickAccessSection } from "../../components/home/HomeQuickAccessSection";
-import { PhoneComposerCard } from "../../components/home/PhoneComposerCard";
+import { PhoneComposerCard, type PhoneSuggestionItem } from "../../components/home/PhoneComposerCard";
+import { SimpleGreetingsSection } from "../../components/home/SimpleGreetingsSection";
 import { AppointmentTemplateModal } from "../../components/messages/AppointmentTemplateModal";
 import { LocationShareModal } from "../../components/messages/LocationShareModal";
 import {
@@ -18,12 +20,11 @@ import {
   isAppointmentMessageTemplate,
   LOCATION_MESSAGE_TEMPLATE_ID
 } from "../../constants/messageTemplates";
-import type { CountryItem } from "../../constants/app";
+import { POPULAR_COUNTRIES, type CountryItem } from "../../constants/app";
 import type { CommunicationActionType, MessageTemplateItem, PhoneHistoryEntry } from "../../domain/models";
 import { useClipboardDetection } from "../../hooks/useClipboardDetection";
-import { useHomeQuickAccess } from "../../hooks/useHomeQuickAccess";
+import { useHomeScreenData } from "../../hooks/useHomeScreenData";
 import { usePhoneComposer } from "../../hooks/usePhoneComposer";
-import { useRecentHistory } from "../../hooks/useRecentHistory";
 import { ContactRepository } from "../../repositories/ContactRepository";
 import { HistoryRepository } from "../../repositories/HistoryRepository";
 import { MessageTemplateRepository } from "../../repositories/MessageTemplateRepository";
@@ -37,7 +38,7 @@ import {
 } from "../../services/LiveLocationService";
 import { hasProAccess, useAppStore } from "../../store/useAppStore";
 import { darkColors, lightColors } from "../../theme/colors";
-import { spacing } from "../../theme/designSystem";
+import { fonts, radius, spacing } from "../../theme/designSystem";
 
 interface QrTarget {
   e164: string;
@@ -75,7 +76,13 @@ export default function HomeScreen() {
   const [vipModalVisible, setVipModalVisible] = useState(false);
   const [appointmentTemplate, setAppointmentTemplate] = useState<MessageTemplateItem | null>(null);
   const [activeLiveSession, setActiveLiveSession] = useState<ActiveLiveLocationSession | null>(null);
+  const [isLocationLoading, setIsLocationLoading] = useState(false);
   const validationStateRef = useRef<"empty" | "invalid" | "valid">("empty");
+  const currentMessageInputRef = useRef(currentMessageInput);
+  useEffect(() => {
+    currentMessageInputRef.current = currentMessageInput;
+  }, [currentMessageInput]);
+
   const { parsedPhone, applyInput } = usePhoneComposer({
     input: currentPhoneInput,
     country: selectedCountry,
@@ -87,15 +94,13 @@ export default function HomeScreen() {
     currentInput: currentPhoneInput,
     countryIso: selectedCountry.iso
   });
-  const recent = useRecentHistory();
-  const quickAccess = useHomeQuickAccess();
+  const homeData = useHomeScreenData();
   const homeTemplates = useMemo(
-    () => quickAccess.templates
-      .filter((template) => template.id !== "msg-template-appointment")
-      .map((template) => template.id === HOME_APPOINTMENT_TEMPLATE_ID
-        ? { ...template, title: "Preparar cita" }
-        : template),
-    [quickAccess.templates]
+    () =>
+      homeData.templates.filter(
+        (template) => template.id !== LOCATION_MESSAGE_TEMPLATE_ID
+      ),
+    [homeData.templates]
   );
 
   const refreshLiveSession = useCallback(async () => {
@@ -109,7 +114,8 @@ export default function HomeScreen() {
   );
 
   useEffect(() => {
-    if (!currentPhoneInput.trim()) {
+    const trimmed = currentPhoneInput.trim();
+    if (!trimmed) {
       validationStateRef.current = "empty";
       return;
     }
@@ -143,6 +149,7 @@ export default function HomeScreen() {
   const recordAction = useCallback(
     async (actionType: CommunicationActionType) => {
       if (!logHistoryEnabled || !parsedPhone.isValid) return;
+      const msg = currentMessageInputRef.current;
       try {
         await HistoryRepository.logAction({
           phoneE164: parsedPhone.e164,
@@ -150,14 +157,14 @@ export default function HomeScreen() {
           countryCode: parsedPhone.countryCode,
           countryIso: parsedPhone.countryIso,
           actionType,
-          metadata: currentMessageInput ? `Msg: ${currentMessageInput}` : undefined
+          metadata: msg ? `Msg: ${msg}` : undefined
         });
-        await recent.reload();
+        await homeData.reload();
       } catch {
         // Una falla del historial local no debe bloquear la comunicación.
       }
     },
-    [currentMessageInput, logHistoryEnabled, parsedPhone, recent]
+    [homeData, logHistoryEnabled, parsedPhone]
   );
 
   const openWhatsApp = useCallback(async () => {
@@ -262,7 +269,7 @@ export default function HomeScreen() {
 
   const recordQuickContactAction = useCallback(
     async (
-      contact: (typeof quickAccess.contacts)[number]["contact"],
+      contact: (typeof homeData.quickContacts)[number]["contact"],
       actionType: CommunicationActionType
     ) => {
       if (!logHistoryEnabled) return;
@@ -275,18 +282,18 @@ export default function HomeScreen() {
           name: contact.name,
           actionType
         });
-        await Promise.all([recent.reload(), quickAccess.reload()]);
+        await homeData.reload();
       } catch {
         // El acceso directo debe funcionar aunque falle el historial local.
       }
     },
-    [logHistoryEnabled, quickAccess, recent]
+    [homeData, logHistoryEnabled]
   );
 
   const markLocationTemplateUsed = useCallback(async () => {
     await MessageTemplateRepository.recordUse(LOCATION_MESSAGE_TEMPLATE_ID);
-    await quickAccess.reload();
-  }, [quickAccess]);
+    await homeData.reload();
+  }, [homeData]);
 
   const shareCurrentLocation = useCallback(async (): Promise<boolean> => {
     try {
@@ -313,6 +320,60 @@ export default function HomeScreen() {
     }
   }, [markLocationTemplateUsed, parsedPhone.e164, parsedPhone.isValid, setCurrentMessageInput, showNotice, showToast]);
 
+  const handleQuickLocationShare = useCallback(async () => {
+    if (isLocationLoading) return;
+    setIsLocationLoading(true);
+    showToast({
+      message: "Obteniendo tu ubicación GPS...",
+      tone: "info",
+      duration: 3_000
+    });
+    try {
+      const payload = await LocationShareService.getCurrentLocationMessage();
+      setCurrentMessageInput(payload.message);
+
+      if (parsedPhone.isValid) {
+        Keyboard.dismiss();
+        await recordAction("whatsapp_message");
+        const result = await CommunicationService.openWhatsApp(parsedPhone.e164, payload.message);
+        if (result.success) {
+          await markLocationTemplateUsed();
+        } else {
+          showNotice({
+            title: "Ubicación cargada",
+            message: result.error || "Se cargó la ubicación en el mensaje.",
+            tone: "error"
+          });
+        }
+      } else {
+        Keyboard.dismiss();
+        const shareResult = await CommunicationService.openWhatsAppShare(payload.message);
+        if (shareResult.success) {
+          await markLocationTemplateUsed();
+          showToast({
+            message: "📍 Elige los contactos en WhatsApp a quienes enviar tu ubicación.",
+            tone: "success",
+            duration: 3_200
+          });
+        } else {
+          showToast({
+            message: "📍 Ubicación cargada en el mensaje.",
+            tone: "success",
+            duration: 3_000
+          });
+        }
+      }
+    } catch (error) {
+      showNotice({
+        title: "No pudimos obtener tu ubicación",
+        message: error instanceof Error ? error.message : "Revisa el permiso y la señal GPS de tu dispositivo.",
+        tone: "error"
+      });
+    } finally {
+      setIsLocationLoading(false);
+    }
+  }, [isLocationLoading, markLocationTemplateUsed, parsedPhone.e164, parsedPhone.isValid, recordAction, setCurrentMessageInput, showNotice, showToast]);
+
   const shareLiveLocation = useCallback(async (): Promise<boolean> => {
     let session = activeLiveSession;
     let sessionCreatedNow = false;
@@ -325,11 +386,11 @@ export default function HomeScreen() {
       const message = buildLiveLocationMessage(session.viewerUrl);
       setCurrentMessageInput(message);
       if (!parsedPhone.isValid) {
-        if (sessionCreatedNow) {
-          await LiveLocationService.stop(session);
-          setActiveLiveSession(null);
+        const shareResult = await CommunicationService.openWhatsAppShare(message);
+        if (shareResult.success) {
+          showToast({ message: "🔴 Elige los contactos en WhatsApp a quienes transmitir en vivo.", tone: "success", duration: 3_200 });
+          return true;
         }
-        showToast({ message: "El destinatario ya no es válido. Elige nuevamente el contacto.", tone: "error" });
         return false;
       }
       const result = await CommunicationService.openWhatsApp(parsedPhone.e164, message);
@@ -370,9 +431,49 @@ export default function HomeScreen() {
     return false;
   }, [parsedPhone.isValid, showToast]);
 
+  const recentSuggestions = useMemo(() => {
+    const list: PhoneSuggestionItem[] = [];
+    const seen = new Set<string>();
+
+    for (const item of homeData.recentItems) {
+      if (!seen.has(item.phoneE164)) {
+        seen.add(item.phoneE164);
+        list.push({
+          id: `recent-${item.id}`,
+          phoneE164: item.phoneE164,
+          phoneFormatted: item.phoneFormatted,
+          name: item.name ?? undefined,
+          countryIso: item.countryIso
+        });
+      }
+    }
+
+    return list.slice(0, 5);
+  }, [homeData.recentItems]);
+
+  const handleSelectSuggestion = useCallback(
+    (item: PhoneSuggestionItem) => {
+      clipboard.dismiss();
+      applyInput(item.phoneE164);
+      if (item.countryIso) {
+        const matched = POPULAR_COUNTRIES.find((c) => c.iso === item.countryIso);
+        if (matched) setSelectedCountry(matched);
+      }
+      showToast({
+        message: `${item.name || item.phoneFormatted} listo.`,
+        tone: "success",
+        duration: 1800
+      });
+    },
+    [applyInput, clipboard, setSelectedCountry, showToast]
+  );
+
+  const insets = useSafeAreaInsets();
+  const dynamicBottomPadding = 0;
+
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={[styles.safeArea, { backgroundColor: colors.background }]}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+      <View style={[styles.content, { flex: 1, paddingBottom: dynamicBottomPadding }]}>
         <HomeHeader
           appMode={appMode}
           showModeSwitch={showModeSwitch}
@@ -400,12 +501,14 @@ export default function HomeScreen() {
           phoneInput={currentPhoneInput}
           messageInput={currentMessageInput}
           parsedPhone={parsedPhone}
+          recentSuggestions={recentSuggestions}
           onCountryPress={() => setCountryModalVisible(true)}
           onPhoneChange={(value) => {
             clipboard.dismiss();
             applyInput(value);
           }}
           onMessageChange={setCurrentMessageInput}
+          onSelectSuggestion={handleSelectSuggestion}
         />
 
         <PhoneActionButtons
@@ -416,6 +519,9 @@ export default function HomeScreen() {
           onSms={() => void sendSms()}
           onCopy={() => void copy()}
           onShare={() => void share()}
+          onLocation={() => void handleQuickLocationShare()}
+          onLocationLongPress={() => setLocationModalVisible(true)}
+          isLocationLoading={isLocationLoading}
           onSaveToAgenda={hasProAccess(appMode) ? saveToAgenda : undefined}
           onShowQr={() => setQrTarget({
             e164: parsedPhone.e164,
@@ -425,89 +531,120 @@ export default function HomeScreen() {
           isDark={isDark}
         />
 
-        {hasProAccess(appMode) && (
+        {hasProAccess(appMode) ? (
           <HomeQuickAccessSection
-            recentItems={recent.items}
-
-          latestActions={recent.latestActions}
-          contacts={quickAccess.contacts}
-          templates={homeTemplates}
-          colors={colors}
-          isDark={isDark}
-          onRecentPress={(item) => {
-            clipboard.dismiss();
-            applyInput(item.phoneE164);
-          }}
-          onRecentLongPress={setHistoryActionTarget}
-          onRecentWhatsApp={(item) => void CommunicationService.openWhatsApp(item.phoneE164)}
-          onRecentCall={(item) => void CommunicationService.makeCall(item.phoneE164)}
-          onRecentToggleFavorite={(item) => {
-            void HistoryRepository.toggleFavorite(item.id).then(recent.reload);
-          }}
-          onRecentDelete={(item) => {
-            void HistoryRepository.delete(item.id).then(() => Promise.all([recent.reload(), quickAccess.reload()]));
-          }}
-          onContactPress={(item) => {
-            clipboard.dismiss();
-            applyInput(item.contact.phoneE164);
-            showToast({ message: `${item.contact.name} listo para usar.`, tone: "success", duration: 1_800 });
-          }}
-          onContactWhatsApp={(item) => {
-            void recordQuickContactAction(item.contact, "whatsapp").then(() =>
-              CommunicationService.openWhatsApp(item.contact.phoneE164)
-            );
-          }}
-          onContactCall={(item) => {
-            void recordQuickContactAction(item.contact, "call").then(() =>
-              CommunicationService.makeCall(item.contact.phoneE164)
-            );
-          }}
-          onContactToggleFavorite={(item) => {
-            void ContactRepository.toggleFavorite(item.contact.id).then(quickAccess.reload);
-          }}
-          onTemplateUse={(template) => {
-            if (template.id === LOCATION_MESSAGE_TEMPLATE_ID) {
-              if (!hasHomeRecipient()) return;
-              setLocationModalVisible(true);
-              return;
-            }
-            if (isAppointmentMessageTemplate(template.id)) {
-              setAppointmentTemplate(template);
-              return;
-            }
-            setCurrentMessageInput(template.content);
-            showToast({
-              message: `Plantilla “${template.title}” cargada en Mensaje opcional.`,
-              tone: "success",
-              duration: 2_200
-            });
-          }}
-          onTemplateSend={(template) => {
-            if (template.id === LOCATION_MESSAGE_TEMPLATE_ID) {
-              if (!hasHomeRecipient()) return;
-              setLocationModalVisible(true);
-              return;
-            }
-            if (isAppointmentMessageTemplate(template.id)) {
-              setAppointmentTemplate(template);
-              return;
-            }
-            if (!hasHomeRecipient()) return;
-            void CommunicationService.openWhatsApp(parsedPhone.e164, template.content).then(async (result) => {
-              if (result.success) {
-                await MessageTemplateRepository.recordUse(template.id);
-                await quickAccess.reload();
+            recentItems={homeData.recentItems}
+            latestActions={homeData.latestActions}
+            contacts={homeData.quickContacts}
+            templates={homeTemplates}
+            colors={colors}
+            isDark={isDark}
+            onReloadTemplates={() => void homeData.reload()}
+            onRecentPress={(item) => {
+              clipboard.dismiss();
+              applyInput(item.phoneE164);
+            }}
+            onRecentLongPress={setHistoryActionTarget}
+            onRecentWhatsApp={(item) => void CommunicationService.openWhatsApp(item.phoneE164)}
+            onRecentCall={(item) => void CommunicationService.makeCall(item.phoneE164)}
+            onRecentToggleFavorite={(item) => {
+              void HistoryRepository.toggleFavorite(item.id).then(homeData.reload);
+            }}
+            onRecentDelete={(item) => {
+              void HistoryRepository.delete(item.id).then(homeData.reload);
+            }}
+            onContactPress={(item) => {
+              clipboard.dismiss();
+              applyInput(item.contact.phoneE164);
+              showToast({ message: `${item.contact.name} listo para usar.`, tone: "success", duration: 1_800 });
+            }}
+            onContactWhatsApp={(item) => {
+              void recordQuickContactAction(item.contact, "whatsapp").then(() =>
+                CommunicationService.openWhatsApp(item.contact.phoneE164)
+              );
+            }}
+            onContactCall={(item) => {
+              void recordQuickContactAction(item.contact, "call").then(() =>
+                CommunicationService.makeCall(item.contact.phoneE164)
+              );
+            }}
+            onContactToggleFavorite={(item) => {
+              void ContactRepository.toggleFavorite(item.contact.id).then(homeData.reload);
+            }}
+            onContactDelete={(item) => {
+              void ContactRepository.delete(item.contact.id).then(homeData.reload);
+            }}
+            onTemplateUse={(template) => {
+              if (template.id === LOCATION_MESSAGE_TEMPLATE_ID) {
+                void handleQuickLocationShare();
                 return;
               }
-              showToast({ message: result.error || "No se pudo abrir WhatsApp.", tone: "error" });
-            });
-          }}
-          onTemplateToggleFavorite={(template) => {
-            void MessageTemplateRepository.toggleFavorite(template.id).then(quickAccess.reload);
-          }}
-        />
+              if (isAppointmentMessageTemplate(template.id)) {
+                setAppointmentTemplate(template);
+                return;
+              }
+              setCurrentMessageInput(template.content);
+            }}
+            onTemplateSend={(template) => {
+              if (template.id === LOCATION_MESSAGE_TEMPLATE_ID) {
+                void handleQuickLocationShare();
+                return;
+              }
+              if (isAppointmentMessageTemplate(template.id)) {
+                setAppointmentTemplate(template);
+                return;
+              }
+              setCurrentMessageInput(template.content);
+              if (parsedPhone.isValid) {
+                void CommunicationService.openWhatsApp(parsedPhone.e164, template.content).then(async (result) => {
+                  if (result.success) {
+                    await MessageTemplateRepository.recordUse(template.id);
+                    await homeData.reload();
+                  } else {
+                    showToast({ message: result.error || "No se pudo abrir WhatsApp.", tone: "error" });
+                  }
+                });
+              } else {
+                void CommunicationService.openWhatsAppShare(template.content).then(async (result) => {
+                  if (result.success) {
+                    await MessageTemplateRepository.recordUse(template.id);
+                    await homeData.reload();
+                    showToast({ message: "Elige los contactos en WhatsApp a quienes enviar.", tone: "success", duration: 2800 });
+                  }
+                });
+              }
+            }}
+            onTemplateToggleFavorite={(template) => {
+              void MessageTemplateRepository.toggleFavorite(template.id).then(homeData.reload);
+            }}
+          />
+        ) : (
+          <SimpleGreetingsSection
+            colors={colors}
+            isDark={isDark}
+            onSelectGreeting={(content) => {
+              setCurrentMessageInput(content);
+            }}
+            onSendGreeting={async (content) => {
+              setCurrentMessageInput(content);
+              if (parsedPhone.isValid) {
+                Keyboard.dismiss();
+                await recordAction("whatsapp_message");
+                const result = await CommunicationService.openWhatsApp(parsedPhone.e164, content);
+                if (!result.success && result.error) {
+                  showNotice({ title: "No se pudo abrir WhatsApp", message: result.error, tone: "error" });
+                }
+              } else {
+                showToast({
+                  message: "Escribe o elige un número para enviar por WhatsApp.",
+                  tone: "info",
+                  duration: 2_600
+                });
+              }
+            }}
+          />
         )}
-      </ScrollView>
+      </View>
 
 
       <CountrySelectorModal
@@ -588,7 +725,7 @@ export default function HomeScreen() {
                   metadata: `Cita: ${appointment.dateLabel}, ${appointment.time}`
                 })
               ]);
-              await Promise.all([quickAccess.reload(), recent.reload()]);
+              await homeData.reload();
               showToast({ message: `Cita guardada para ${recipient.name}.`, tone: "success" });
             } catch {
               showToast({ message: "WhatsApp se abrió, pero no se pudo guardar la cita localmente.", tone: "error" });
@@ -614,7 +751,8 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 20,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.xl
-  }
+    paddingTop: spacing.xxs,
+    paddingBottom: spacing.lg
+  },
+
 });

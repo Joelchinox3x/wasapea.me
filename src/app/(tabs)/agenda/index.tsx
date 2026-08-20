@@ -1,5 +1,5 @@
 import { useFocusEffect, useRouter } from "expo-router";
-import { Plus, Star, Upload, Users } from "lucide-react-native";
+import { Download, Plus, Star, Upload, Users } from "lucide-react-native";
 import LottieView from "lottie-react-native";
 import React, { useCallback, useState } from "react";
 import {
@@ -21,7 +21,6 @@ import { MultiContactImportModal } from "../../../components/MultiContactImportM
 import { SearchInput } from "../../../components/SearchInput";
 import {
   ClientIcon,
-  GoogleContactsIcon,
   PersonalIcon,
   SupplierIcon,
   TemporaryIcon,
@@ -30,6 +29,7 @@ import {
 } from "../../../components/icons/AppSvgIcons";
 import { CategoryItemData, CategoryRepository } from "../../../repositories/CategoryRepository";
 import { ContactRepository, InternalContact } from "../../../repositories/ContactRepository";
+import { HistoryRepository } from "../../../repositories/HistoryRepository";
 import { CommunicationService } from "../../../services/CommunicationService";
 import { useAppStore } from "../../../store/useAppStore";
 import { darkColors, lightColors } from "../../../theme/colors";
@@ -60,6 +60,24 @@ export default function AgendaScreen() {
   const [exportModalVisible, setExportModalVisible] = useState(false);
   const showClientEmptyAnimation = selectedCategoryId === "cat-clientes" && !onlyFavorites && !search.trim();
 
+  const recordContactAction = useCallback(
+    async (contactItem: InternalContact, actionType: "whatsapp" | "call" | "sms") => {
+      try {
+        await HistoryRepository.logAction({
+          phoneE164: contactItem.phoneE164,
+          phoneFormatted: contactItem.phoneFormatted,
+          countryCode: contactItem.countryCode,
+          countryIso: contactItem.countryIso,
+          name: contactItem.name,
+          actionType
+        });
+      } catch {
+        /* ignore */
+      }
+    },
+    []
+  );
+
   const loadData = useCallback(async () => {
     try {
       const [cats, cnts] = await Promise.all([
@@ -80,7 +98,7 @@ export default function AgendaScreen() {
   );
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
+    <SafeAreaView edges={["top", "left", "right"]} style={[styles.safeArea, { backgroundColor: colors.background }]}>
       <View style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
@@ -106,7 +124,7 @@ export default function AgendaScreen() {
               accessibilityRole="button"
               accessibilityLabel="Importar contactos del dispositivo"
             >
-              <GoogleContactsIcon size={19} />
+              <Download size={19} color={colors.primary} />
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -115,7 +133,7 @@ export default function AgendaScreen() {
               accessibilityRole="button"
               accessibilityLabel="Exportar contactos al teléfono"
             >
-              <Upload size={18} color={colors.primary} />
+              <Upload size={19} color={colors.primary} />
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -191,7 +209,7 @@ export default function AgendaScreen() {
           data={contactsList}
           keyExtractor={(item) => item.id}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 24, paddingTop: 4 }}
+          contentContainerStyle={{ paddingBottom: 12, paddingTop: 4 }}
           renderItem={({ item }) => {
             const cat = categoriesList.find((c) => c.id === item.categoryId);
             return (
@@ -201,11 +219,22 @@ export default function AgendaScreen() {
                 categoryColor={cat?.color}
                 isDark={isDark}
                 onPress={() => router.push(`/agenda/${item.id}`)}
-                onWhatsApp={() => CommunicationService.openWhatsApp(item.phoneE164)}
-                onCall={() => CommunicationService.makeCall(item.phoneE164)}
+                onWhatsApp={async () => {
+                  await recordContactAction(item, "whatsapp");
+                  await CommunicationService.openWhatsApp(item.phoneE164);
+                }}
+                onCall={async () => {
+                  await recordContactAction(item, "call");
+                  await CommunicationService.makeCall(item.phoneE164);
+                }}
                 onToggleFavorite={async () => {
                   await ContactRepository.toggleFavorite(item.id);
                   loadData();
+                }}
+                onDelete={async () => {
+                  await ContactRepository.delete(item.id);
+                  loadData();
+                  showToast({ message: "Contacto eliminado.", tone: "info" });
                 }}
               />
             );

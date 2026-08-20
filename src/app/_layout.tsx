@@ -7,18 +7,17 @@ import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import React, { useCallback, useEffect, useState } from "react";
 import { useColorScheme } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { AppToastHost } from "../components/AppToastHost";
 import { BrandedSplash } from "../components/BrandedSplash";
 import { DatabaseRecoveryScreen } from "../components/DatabaseRecoveryScreen";
-import { ModeTransitionOverlay } from "../components/ModeTransitionOverlay";
 import { NoticeModal } from "../components/NoticeModal";
-
 import { initDatabase } from "../database/db";
 import { useAppStore } from "../store/useAppStore";
 import { darkColors, lightColors } from "../theme/colors";
 import "../services/LiveLocationService";
 
-SplashScreen.preventAutoHideAsync().catch(() => {});
+SplashScreen.preventAutoHideAsync().catch(() => { });
 SplashScreen.setOptions({ duration: 250, fade: true });
 
 export default function RootLayout() {
@@ -33,9 +32,7 @@ export default function RootLayout() {
   });
   const colorScheme = useColorScheme();
   const themeMode = useAppStore((state) => state.themeMode);
-  const appMode = useAppStore((state) => state.appMode);
   const appModeHydrated = useAppStore((state) => state.appModeHydrated);
-
   const hydrateAppMode = useAppStore((state) => state.hydrateAppMode);
   const notice = useAppStore((state) => state.notice);
   const hideNotice = useAppStore((state) => state.hideNotice);
@@ -91,33 +88,33 @@ export default function RootLayout() {
   };
 
   return (
-    <ThemeProvider value={customTheme}>
-      <StatusBar style={showSplash || isDark ? "light" : "dark"} />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: isDark ? darkColors.background : lightColors.background }
-        }}
-      >
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="agenda/[id]" options={{ headerShown: false }} />
-        <Stack.Screen name="agenda/create" options={{ headerShown: false, presentation: "modal" }} />
-        <Stack.Screen name="agenda/edit/[id]" options={{ headerShown: false, presentation: "modal" }} />
-        <Stack.Screen name="pro" options={{ headerShown: false, presentation: "modal" }} />
-      </Stack>
-      <AppToastHost />
-      <ModeTransitionOverlay mode={appMode} isDark={isDark} />
-      <NoticeModal
-
-        visible={notice !== null}
-        title={notice?.title || ""}
-        message={notice?.message || ""}
-        tone={notice?.tone}
-        onClose={hideNotice}
-        isDark={isDark}
-      />
-      {showSplash && <BrandedSplash onFinish={() => setShowSplash(false)} />}
-    </ThemeProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ThemeProvider value={customTheme}>
+        <StatusBar style={showSplash || isDark ? "light" : "dark"} />
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: isDark ? darkColors.background : lightColors.background }
+          }}
+        >
+          <Stack.Screen name="index" options={{ headerShown: false }} />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="agenda/[id]" options={{ headerShown: false }} />
+          <Stack.Screen name="agenda/create" options={{ headerShown: false, presentation: "modal" }} />
+          <Stack.Screen name="agenda/edit/[id]" options={{ headerShown: false, presentation: "modal" }} />
+          <Stack.Screen name="pro" options={{ headerShown: false, presentation: "modal" }} />
+        </Stack>
+        <AppToastHost />
+        <NoticeModal
+          visible={notice !== null}
+          title={notice?.title || ""}
+          message={notice?.message || ""}
+          tone={notice?.tone}
+          onClose={hideNotice}
+          isDark={isDark}
+        />
+        {showSplash && <BrandedSplash onFinish={() => setShowSplash(false)} />}
+      </ThemeProvider>
+    </GestureHandlerRootView>
   );
 }

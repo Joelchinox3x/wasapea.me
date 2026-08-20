@@ -5,6 +5,7 @@ import { SecureStorageService } from "../services/SecureStorageService";
 export type ThemeMode = "system" | "light" | "dark";
 export type AppMode = "simple" | "pro" | "vip";
 export type ElevatedAppMode = Exclude<AppMode, "simple">;
+export type TemplateDensity = "large" | "grid2x2" | "grid2x3";
 export type NoticeTone = "info" | "success" | "error";
 
 export interface AppNotice {
@@ -22,10 +23,17 @@ export interface AppToast {
 
 export type AppToastInput = Omit<AppToast, "id">;
 
+export interface TrustedContact {
+  id: string;
+  name: string;
+  phone: string;
+}
+
 const APP_MODE_STORAGE_KEY = "wasapeame.app-mode";
 const LAST_ELEVATED_MODE_STORAGE_KEY = "wasapeame.last-elevated-mode";
 const MODE_SWITCH_VISIBILITY_STORAGE_KEY = "wasapeame.show-mode-switch";
 const PREFERENCES_STORAGE_KEY = "wasapeame.preferences.v1";
+const TRUSTED_CONTACTS_STORAGE_KEY = "wasapeame.trusted-contacts";
 let toastSequence = 0;
 
 interface PersistedPreferences {
@@ -34,6 +42,7 @@ interface PersistedPreferences {
   autoDetectClipboard: boolean;
   confirmBeforeCall: boolean;
   logHistoryEnabled: boolean;
+  templateDensity?: TemplateDensity;
 }
 
 export interface AppStoreState {
@@ -46,8 +55,10 @@ export interface AppStoreState {
   autoDetectClipboard: boolean;
   confirmBeforeCall: boolean;
   logHistoryEnabled: boolean;
+  templateDensity: TemplateDensity;
   currentPhoneInput: string;
   currentMessageInput: string;
+  trustedContacts: TrustedContact[];
   notice: AppNotice | null;
   toast: AppToast | null;
 
@@ -60,6 +71,8 @@ export interface AppStoreState {
   setAutoDetectClipboard: (enabled: boolean) => void;
   setConfirmBeforeCall: (enabled: boolean) => void;
   setLogHistoryEnabled: (enabled: boolean) => void;
+  setTemplateDensity: (density: TemplateDensity) => void;
+  setTrustedContacts: (contacts: TrustedContact[]) => void;
   setCurrentPhoneInput: (phone: string) => void;
   setCurrentMessageInput: (msg: string) => void;
   showNotice: (notice: AppNotice) => void;
@@ -75,7 +88,8 @@ function persistPreferences(state: AppStoreState): Promise<boolean> {
     countryIso: state.selectedCountry.iso,
     autoDetectClipboard: state.autoDetectClipboard,
     confirmBeforeCall: state.confirmBeforeCall,
-    logHistoryEnabled: state.logHistoryEnabled
+    logHistoryEnabled: state.logHistoryEnabled,
+    templateDensity: state.templateDensity
   };
   return SecureStorageService.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(preferences));
 }
@@ -90,8 +104,10 @@ export const useAppStore = create<AppStoreState>((set, get) => ({
   autoDetectClipboard: true,
   confirmBeforeCall: false,
   logHistoryEnabled: true,
+  templateDensity: "large",
   currentPhoneInput: "",
   currentMessageInput: "",
+  trustedContacts: [],
   notice: null,
   toast: null,
 
@@ -114,16 +130,22 @@ export const useAppStore = create<AppStoreState>((set, get) => ({
     set({ showModeSwitch: visible });
     void SecureStorageService.setItem(MODE_SWITCH_VISIBILITY_STORAGE_KEY, visible ? "true" : "false");
   },
+  setTrustedContacts: (contacts) => {
+    set({ trustedContacts: contacts });
+    void SecureStorageService.setItem(TRUSTED_CONTACTS_STORAGE_KEY, JSON.stringify(contacts));
+  },
   hydrateAppMode: async () => {
     try {
-      const [storedMode, storedLastElevatedMode, storedSwitchVisibility, storedPreferences] = await Promise.all([
+      const [storedMode, storedLastElevatedMode, storedSwitchVisibility, storedPreferences, storedTrusted] = await Promise.all([
         SecureStorageService.getItem(APP_MODE_STORAGE_KEY),
         SecureStorageService.getItem(LAST_ELEVATED_MODE_STORAGE_KEY),
         SecureStorageService.getItem(MODE_SWITCH_VISIBILITY_STORAGE_KEY),
-        SecureStorageService.getItem(PREFERENCES_STORAGE_KEY)
+        SecureStorageService.getItem(PREFERENCES_STORAGE_KEY),
+        SecureStorageService.getItem(TRUSTED_CONTACTS_STORAGE_KEY)
       ]);
       const preferences = storedPreferences ? (JSON.parse(storedPreferences) as Partial<PersistedPreferences>) : null;
       const storedCountry = POPULAR_COUNTRIES.find((item) => item.iso === preferences?.countryIso);
+      const trustedContacts = storedTrusted ? (JSON.parse(storedTrusted) as TrustedContact[]) : [];
       set({
         appMode: storedMode === "pro" || storedMode === "vip" ? storedMode : "simple",
         lastElevatedMode: storedLastElevatedMode === "vip" ? "vip" : "pro",
@@ -135,6 +157,10 @@ export const useAppStore = create<AppStoreState>((set, get) => ({
         autoDetectClipboard: preferences?.autoDetectClipboard ?? true,
         confirmBeforeCall: preferences?.confirmBeforeCall ?? false,
         logHistoryEnabled: preferences?.logHistoryEnabled ?? true,
+        templateDensity: ["large", "grid2x2", "grid2x3"].includes(String(preferences?.templateDensity))
+          ? (preferences?.templateDensity as TemplateDensity)
+          : "large",
+        trustedContacts,
         appModeHydrated: true
       });
     } catch {
@@ -155,6 +181,10 @@ export const useAppStore = create<AppStoreState>((set, get) => ({
   },
   setLogHistoryEnabled: (enabled) => {
     set({ logHistoryEnabled: enabled });
+    void persistPreferences(get());
+  },
+  setTemplateDensity: (density) => {
+    set({ templateDensity: density });
     void persistPreferences(get());
   },
   setCurrentPhoneInput: (phone) => set({ currentPhoneInput: phone }),

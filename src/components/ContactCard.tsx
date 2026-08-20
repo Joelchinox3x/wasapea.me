@@ -1,7 +1,9 @@
-import { Phone, Star } from "lucide-react-native";
-import React from "react";
+import * as Haptics from "expo-haptics";
+import { Phone, Star, Trash2 } from "lucide-react-native";
+import React, { useEffect, useRef } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { InternalContact } from "../repositories/ContactRepository";
+import Swipeable from "react-native-gesture-handler/Swipeable";
+import type { InternalContact } from "../repositories/ContactRepository";
 import { darkColors, lightColors } from "../theme/colors";
 import { WhatsAppGlyphIcon } from "./icons/AppSvgIcons";
 
@@ -13,7 +15,12 @@ interface ContactCardProps {
   onWhatsApp: () => void;
   onCall: () => void;
   onToggleFavorite: () => void;
+  onDelete?: () => void;
+  showInlineWhatsApp?: boolean;
+  showInlineCall?: boolean;
+  showInlineFavorite?: boolean;
   isDark?: boolean;
+  enableSwipeable?: boolean;
 }
 
 export function ContactCard({
@@ -24,14 +31,89 @@ export function ContactCard({
   onWhatsApp,
   onCall,
   onToggleFavorite,
-  isDark = false
+  onDelete,
+  showInlineWhatsApp = false,
+  showInlineCall = false,
+  showInlineFavorite = false,
+  isDark = false,
+  enableSwipeable = true
 }: ContactCardProps) {
   const colors = isDark ? darkColors : lightColors;
   const avatarColor = categoryName && categoryColor ? categoryColor : null;
+  const swipeableRef = useRef<Swipeable>(null);
+  const autoCloseTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const initial = contact.name.trim().charAt(0).toUpperCase() || "👤";
 
-  return (
+  const triggerHaptic = () => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+  };
+
+  const clearAutoCloseTimer = () => {
+    if (autoCloseTimerRef.current) {
+      clearTimeout(autoCloseTimerRef.current);
+      autoCloseTimerRef.current = null;
+    }
+  };
+
+  const handleOpen = () => {
+    clearAutoCloseTimer();
+    autoCloseTimerRef.current = setTimeout(() => {
+      swipeableRef.current?.close();
+    }, 3500);
+  };
+
+  useEffect(() => {
+    return () => {
+      clearAutoCloseTimer();
+    };
+  }, []);
+
+  const renderRightActions = () => (
+    <View style={styles.rightSwipeActions}>
+      <TouchableOpacity
+        style={[styles.swipeBtn, { backgroundColor: colors.primary }]}
+        onPress={() => {
+          triggerHaptic();
+          swipeableRef.current?.close();
+          onWhatsApp();
+        }}
+      >
+        <WhatsAppGlyphIcon size={20} color="#FFFFFF" />
+        <Text style={styles.swipeBtnText}>WhatsApp</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.swipeBtn, { backgroundColor: colors.call }]}
+        onPress={() => {
+          triggerHaptic();
+          swipeableRef.current?.close();
+          onCall();
+        }}
+      >
+        <Phone size={18} color="#FFFFFF" />
+        <Text style={styles.swipeBtnText}>Llamar</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderLeftActions = () => (
+    <View style={styles.leftSwipeActions}>
+      <TouchableOpacity
+        style={[styles.swipeBtn, { backgroundColor: colors.favorite }]}
+        onPress={() => {
+          triggerHaptic();
+          swipeableRef.current?.close();
+          onToggleFavorite();
+        }}
+      >
+        <Star size={19} color="#FFFFFF" fill={contact.favorite === 1 ? "#FFFFFF" : "none"} />
+        <Text style={styles.swipeBtnText}>{contact.favorite === 1 ? "Quitar" : "Favorito"}</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const cardContent = (
     <TouchableOpacity
       activeOpacity={0.7}
       onPress={onPress}
@@ -72,45 +154,101 @@ export function ContactCard({
         )}
       </View>
 
-      {/* Actions */}
+      {/* Actions / Indicator */}
       <View style={styles.actions}>
-        <TouchableOpacity onPress={onToggleFavorite} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-          <Star
-            size={19}
-            color={contact.favorite === 1 ? colors.favorite : colors.subtext}
-            fill={contact.favorite === 1 ? colors.favorite : "none"}
-          />
-        </TouchableOpacity>
+        {showInlineFavorite ? (
+          <TouchableOpacity
+            onPress={() => {
+              triggerHaptic();
+              onToggleFavorite();
+            }}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Star
+              size={18}
+              color={contact.favorite === 1 ? colors.favorite : colors.subtext}
+              fill={contact.favorite === 1 ? colors.favorite : "none"}
+            />
+          </TouchableOpacity>
+        ) : contact.favorite === 1 ? (
+          <Star size={16} color={colors.favorite} fill={colors.favorite} style={{ marginRight: 4 }} />
+        ) : null}
 
-        <TouchableOpacity
-          onPress={onWhatsApp}
-          style={[styles.quickBtn, { backgroundColor: colors.primary }]}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <WhatsAppGlyphIcon size={17} color="#FFFFFF" />
-        </TouchableOpacity>
+        {showInlineWhatsApp && (
+          <TouchableOpacity
+            onPress={() => {
+              triggerHaptic();
+              onWhatsApp();
+            }}
+            style={[styles.quickBtn, { backgroundColor: colors.primary }]}
+            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+          >
+            <WhatsAppGlyphIcon size={16} color="#FFFFFF" />
+          </TouchableOpacity>
+        )}
 
-        <TouchableOpacity
-          onPress={onCall}
-          style={[styles.quickBtn, { backgroundColor: colors.call }]}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Phone size={16} color="#FFFFFF" />
-        </TouchableOpacity>
+        {showInlineCall && (
+          <TouchableOpacity
+            onPress={() => {
+              triggerHaptic();
+              onCall();
+            }}
+            style={[styles.quickBtn, { backgroundColor: colors.call }]}
+            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+          >
+            <Phone size={15} color="#FFFFFF" />
+          </TouchableOpacity>
+        )}
+
+        {onDelete && (
+          <TouchableOpacity
+            onPress={() => {
+              triggerHaptic();
+              onDelete();
+            }}
+            style={[styles.quickBtn, { backgroundColor: colors.error + "1A" }]}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityLabel="Eliminar contacto"
+          >
+            <Trash2 size={16} color={colors.error} />
+          </TouchableOpacity>
+        )}
       </View>
     </TouchableOpacity>
+  );
+
+  if (!enableSwipeable) {
+    return cardContent;
+  }
+
+  return (
+    <Swipeable
+      ref={swipeableRef}
+      renderRightActions={renderRightActions}
+      renderLeftActions={renderLeftActions}
+      onSwipeableOpen={handleOpen}
+      onSwipeableClose={clearAutoCloseTimer}
+      friction={1.6}
+      overshootRight={false}
+      overshootLeft={false}
+      containerStyle={styles.swipeContainer}
+    >
+      {cardContent}
+    </Swipeable>
   );
 }
 
 const styles = StyleSheet.create({
+  swipeContainer: {
+    marginBottom: 8
+  },
   container: {
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: 12,
     paddingHorizontal: 14,
     borderRadius: 16,
-    borderWidth: 1,
-    marginBottom: 8
+    borderWidth: 1
   },
   avatar: {
     width: 44,
@@ -167,5 +305,35 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: "center",
     justifyContent: "center"
+  },
+  cleanTrailingRow: {
+    flexDirection: "row",
+    alignItems: "center"
+  },
+  rightSwipeActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingLeft: 6,
+    marginBottom: 8
+  },
+  leftSwipeActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingRight: 6,
+    marginBottom: 8
+  },
+  swipeBtn: {
+    width: 64,
+    height: "100%",
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4
+  },
+  swipeBtnText: {
+    color: "#FFFFFF",
+    fontSize: 10,
+    fontWeight: "700"
   }
 });

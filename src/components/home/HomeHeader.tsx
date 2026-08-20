@@ -47,16 +47,25 @@ export function HomeHeader({ appMode, showModeSwitch, compact, colors, onModeCha
             entering={FadeInDown.duration(200)}
             exiting={FadeOutUp.duration(150)}
           >
-            <ScalePressable
-              onPress={onVipPress}
-              pressedScale={0.94}
-              accessibilityRole="button"
-              accessibilityLabel={isVip ? "Abrir estado VIP" : "Conocer versión VIP"}
-              style={[styles.proBadge, { backgroundColor: modeColor + "1F", borderColor: modeColor + "77", shadowColor: modeColor }]}
-            >
-              {isVip ? <Crown size={12} color={modeColor} /> : <Sparkles size={11} color={modeColor} />}
-              <Text style={[styles.proBadgeText, { color: modeColor }]}>{isVip ? "VIP" : "PRO"}</Text>
-            </ScalePressable>
+            {isVip ? (
+              <ScalePressable
+                onPress={onVipPress}
+                pressedScale={0.94}
+                accessibilityRole="button"
+                accessibilityLabel="Abrir estado VIP"
+                style={[styles.proBadge, { backgroundColor: modeColor + "1F", borderColor: modeColor + "77", shadowColor: modeColor }]}
+              >
+                <Crown size={12} color={modeColor} />
+                <Text style={[styles.proBadgeText, { color: modeColor }]}>VIP</Text>
+              </ScalePressable>
+            ) : (
+              <View
+                style={[styles.proBadge, { backgroundColor: modeColor + "1F", borderColor: modeColor + "77", shadowColor: modeColor }]}
+              >
+                <Sparkles size={11} color={modeColor} />
+                <Text style={[styles.proBadgeText, { color: modeColor }]}>PRO</Text>
+              </View>
+            )}
           </Animated.View>
         )}
         {showModeSwitch && <AppModeSelector mode={appMode} onChange={onModeChange} colors={colors} compact />}
@@ -67,12 +76,12 @@ export function HomeHeader({ appMode, showModeSwitch, compact, colors, onModeCha
 
 const styles = StyleSheet.create({
   header: {
-    minHeight: 72,
+    minHeight: 52,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     gap: spacing.xs,
-    marginBottom: spacing.md
+    marginBottom: spacing.xs
   },
   brandRow: {
     flexDirection: "row",

@@ -1,7 +1,7 @@
 const TEMPORARY_ADMIN_CODES = new Set(["PROMO2026"]);
 
 function normalize(value: string): string {
-  return value.trim().toUpperCase();
+  return value.trim().toUpperCase().replace(/\s+/g, "");
 }
 
 export class VipAccessService {
