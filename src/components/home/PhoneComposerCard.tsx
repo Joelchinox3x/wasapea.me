@@ -1,4 +1,4 @@
-import { ChevronDown, Clock3, Grid3X3, History, MessageSquare, User, X } from "lucide-react-native";
+import { ChevronDown, Clock3, Grid3X3, MessageSquare, User, X } from "lucide-react-native";
 import React, { useState } from "react";
 import { StyleSheet, Text, TextInput, View } from "react-native";
 import Animated, { FadeInDown, FadeOutUp, interpolateColor, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";

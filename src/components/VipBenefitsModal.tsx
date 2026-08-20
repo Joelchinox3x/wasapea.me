@@ -3,7 +3,7 @@ import {
   BottomSheetView,
   type BottomSheetMethods
 } from "@expo/ui/community/bottom-sheet";
-import { Crown, Eye, EyeOff, LockKeyhole, ShieldCheck, Sparkles, X } from "lucide-react-native";
+import { Crown, Eye, EyeOff, LockKeyhole, ShieldCheck, X } from "lucide-react-native";
 import React, { useCallback, useRef, useState } from "react";
 import {
   ActivityIndicator,

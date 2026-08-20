@@ -1,4 +1,4 @@
-import { Plus, X } from "lucide-react-native";
+import { X } from "lucide-react-native";
 import React, { useState } from "react";
 import { Modal, StyleSheet, Text, TextInput, View } from "react-native";
 import { MessageTemplateRepository } from "../../repositories/MessageTemplateRepository";

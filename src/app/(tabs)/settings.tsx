@@ -36,8 +36,6 @@ export default function SettingsScreen() {
     setLogHistoryEnabled,
     templateDensity,
     setTemplateDensity,
-    trustedContacts,
-    setTrustedContacts,
     showNotice
   } = useAppStore();
   const isDark = themeMode === "dark" || (themeMode === "system" && colorScheme === "dark");

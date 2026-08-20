@@ -1,4 +1,4 @@
-import { BookOpen, Plus, Trash2, UserCheck, UserPlus } from "lucide-react-native";
+import { BookOpen, Trash2, UserPlus } from "lucide-react-native";
 import React, { useState } from "react";
 import { ActivityIndicator, Modal, StyleSheet, Text, TextInput, View } from "react-native";
 import { CommunicationService } from "../../services/CommunicationService";
@@ -53,6 +53,7 @@ export function TrustedContactsSettings({
     const newContacts = [...trustedContacts];
     if (nameInput.trim() && phoneInput.trim()) {
       newContacts[editingSlotIndex] = {
+        // eslint-disable-next-line react-hooks/purity
         id: existingContact(editingSlotIndex)?.id ?? `tc-${Date.now()}`,
         name: nameInput.trim(),
         phone: phoneInput.trim()

@@ -256,7 +256,7 @@ export const SimpleGreetingsSection = React.memo(function SimpleGreetingsSection
       -1,
       false
     );
-  }, []);
+  }, [lineSweep]);
 
   const lineSweepStyle = useAnimatedStyle(() => {
     const translateY = interpolate(lineSweep.value, [0, 1], [-60, 298]);
@@ -280,19 +280,22 @@ export const SimpleGreetingsSection = React.memo(function SimpleGreetingsSection
       const stiffness = distance > 120 ? 120 : 150;
 
       // Smooth spring movement to the selected row level
+      // eslint-disable-next-line react-hooks/immutability
       heartY.value = withSpring(targetY, { damping, stiffness });
 
       // Pulse Heart badge on arrival
+      // eslint-disable-next-line react-hooks/immutability
       heartScale.value = withSequence(
         withTiming(1.3, { duration: 180, easing: Easing.out(Easing.quad) }),
         withTiming(1.0, { duration: 250, easing: Easing.inOut(Easing.quad) })
       );
     },
-    [onSelectGreeting]
+    [heartScale, heartY, onSelectGreeting]
   );
 
   useEffect(() => {
     // Periodic heartbeat when idle
+    // eslint-disable-next-line react-hooks/immutability
     heartScale.value = withRepeat(
       withSequence(
         withTiming(1.25, { duration: 350, easing: Easing.out(Easing.quad) }),
@@ -302,7 +305,7 @@ export const SimpleGreetingsSection = React.memo(function SimpleGreetingsSection
       -1,
       false
     );
-  }, []);
+  }, [heartScale]);
 
   const heartBadgeStyle = useAnimatedStyle(() => {
     return {

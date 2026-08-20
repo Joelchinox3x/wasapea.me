@@ -9,7 +9,7 @@
     "@lottiefiles/dotlottie-react": "^0.13.5",
     "@shopify/react-native-skia": "2.6.2",
     "drizzle-orm": "^0.45.2",
-    "expo": "~57.0.13",
+    "expo": "~57.0.15",
     "expo-blur": "~57.0.2",
     "expo-build-properties": "~57.0.11",
     "expo-camera": "~57.0.3",

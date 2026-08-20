@@ -1,12 +1,11 @@
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Keyboard, ScrollView, StyleSheet, Text, useColorScheme, useWindowDimensions, View } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { Keyboard, StyleSheet, useColorScheme, useWindowDimensions, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { CountrySelectorModal } from "../../components/CountrySelectorModal";
 import { MoreActionsSheet } from "../../components/MoreActionsSheet";
 import { PhoneActionButtons } from "../../components/PhoneActionButtons";
 import { QrCodeModal } from "../../components/QrCodeModal";
-import { ScalePressable } from "../../components/ScalePressable";
 import { VipBenefitsModal } from "../../components/VipBenefitsModal";
 import { ClipboardDetectionBanner } from "../../components/home/ClipboardDetectionBanner";
 import { HomeHeader } from "../../components/home/HomeHeader";
@@ -16,7 +15,6 @@ import { SimpleGreetingsSection } from "../../components/home/SimpleGreetingsSec
 import { AppointmentTemplateModal } from "../../components/messages/AppointmentTemplateModal";
 import { LocationShareModal } from "../../components/messages/LocationShareModal";
 import {
-  HOME_APPOINTMENT_TEMPLATE_ID,
   isAppointmentMessageTemplate,
   LOCATION_MESSAGE_TEMPLATE_ID
 } from "../../constants/messageTemplates";
@@ -38,7 +36,7 @@ import {
 } from "../../services/LiveLocationService";
 import { hasProAccess, useAppStore } from "../../store/useAppStore";
 import { darkColors, lightColors } from "../../theme/colors";
-import { fonts, radius, spacing } from "../../theme/designSystem";
+import { spacing } from "../../theme/designSystem";
 
 interface QrTarget {
   e164: string;
@@ -421,16 +419,6 @@ export default function HomeScreen() {
     showToast({ message: "Ubicación en vivo detenida.", tone: "success" });
   }, [activeLiveSession, showToast]);
 
-  const hasHomeRecipient = useCallback((): boolean => {
-    if (parsedPhone.isValid) return true;
-    showToast({
-      message: "Primero escribe un número válido o elige un contacto.",
-      tone: "error",
-      duration: 2_600
-    });
-    return false;
-  }, [parsedPhone.isValid, showToast]);
-
   const recentSuggestions = useMemo(() => {
     const list: PhoneSuggestionItem[] = [];
     const seen = new Set<string>();
@@ -468,7 +456,6 @@ export default function HomeScreen() {
     [applyInput, clipboard, setSelectedCountry, showToast]
   );
 
-  const insets = useSafeAreaInsets();
   const dynamicBottomPadding = 0;
 
   return (

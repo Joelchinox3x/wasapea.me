@@ -50,7 +50,6 @@ export default function HistoryScreen() {
   const colors = isDark ? darkColors : lightColors;
 
   const [historyList, setHistoryList] = useState<PhoneHistoryEntry[]>([]);
-  const [actionTypes, setActionTypes] = useState<Record<string, string[]>>({});
   const [latestActions, setLatestActions] = useState<Record<string, string>>({});
   const [hasAnyHistory, setHasAnyHistory] = useState(false);
   const [search, setSearch] = useState("");
@@ -77,13 +76,11 @@ export default function HistoryScreen() {
         : enriched;
       const maps = buildHistoryActionMaps(actions);
       setHistoryList(list);
-      setActionTypes(maps.actionTypes);
       setLatestActions(maps.latestActions);
       setHasAnyHistory(allHistory.length > 0);
       setLoadError(null);
     } catch (error) {
       setHistoryList([]);
-      setActionTypes({});
       setLatestActions({});
       setLoadError(error instanceof Error ? error.message : "No se pudo leer el historial local.");
     }

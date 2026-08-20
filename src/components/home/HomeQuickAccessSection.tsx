@@ -1,5 +1,5 @@
 import * as Haptics from "expo-haptics";
-import { ChevronLeft, ChevronRight, MessageSquareText, Plus, UsersRound } from "lucide-react-native";
+import { MessageSquareText, UsersRound } from "lucide-react-native";
 import React, { useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { Directions, Gesture, GestureDetector } from "react-native-gesture-handler";
@@ -38,15 +38,6 @@ interface HomeQuickAccessSectionProps {
   onTemplateToggleFavorite: (template: MessageTemplateItem) => void;
   onReloadTemplates?: () => void;
 }
-
-const tabs: {
-  id: QuickAccessTab;
-  label: string;
-  icon: typeof UsersRound;
-}[] = [
-    { id: "contacts", label: "Contactos Frecuentes", icon: UsersRound },
-    { id: "messages", label: "Plantillas de Mensaje", icon: MessageSquareText }
-  ];
 
 export const HomeQuickAccessSection = React.memo(function HomeQuickAccessSection({
   contacts,
@@ -88,8 +79,6 @@ export const HomeQuickAccessSection = React.memo(function HomeQuickAccessSection
     });
 
   const swipeTabGesture = Gesture.Simultaneous(flingLeft, flingRight);
-  const activeTabMeta = tabs.find((t) => t.id === activeTab) ?? tabs[0];
-  const ActiveIcon = activeTabMeta.icon;
 
   return (
     <View style={styles.section}>
