@@ -5,7 +5,7 @@
 ![Wasapea.me Logo](https://img.shields.io/badge/WASAPEA.ME-v1.3.3-00E676?style=for-the-badge&logo=whatsapp&logoColor=white)
 ![Expo SDK](https://img.shields.io/badge/Expo_SDK-57.0-4630EB?style=for-the-badge&logo=expo&logoColor=white)
 ![React Native](https://img.shields.io/badge/React_Native-0.86-61DAFB?style=for-the-badge&logo=react&logoColor=black)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
 ![SQLite](https://img.shields.io/badge/SQLite-Drizzle_ORM-003B57?style=for-the-badge&logo=sqlite&logoColor=white)
 ![Licencia](https://img.shields.io/badge/Licencia-MIT-green?style=for-the-badge)
 
@@ -20,7 +20,7 @@
 
 ## 🌟 ¿Qué es WASAPEA.ME?
 
-**WASAPEA.ME** es una aplicación móvil nativa construida con **React Native (SDK 57) + Expo Router**, diseñada para romper la barrera de agregar números desconocidos a tu lista de contactos personales antes de enviar un mensaje de WhatsApp.
+**WASAPEA.ME** es una aplicación móvil nativa construida con **React Native (SDK 57) + Expo Router (~57.0.13)**, diseñada para romper la barrera de agregar números desconocidos a tu lista de contactos personales antes de enviar un mensaje de WhatsApp.
 
 Con una interfaz ultramoderna, soporte para gestos táctiles, transmisión de ubicación GPS en tiempo real y una agenda local privada basada en **SQLite + Drizzle ORM**, **WASAPEA.ME** ofrece la solución más rápida, segura y elegante para usuarios personales, negocios y profesionales.
 
@@ -73,7 +73,7 @@ Con una interfaz ultramoderna, soporte para gestos táctiles, transmisión de ub
 | Capa | Tecnología / Módulo |
 | :--- | :--- |
 | **Core Framework** | React Native (v0.86) + Expo (SDK 57) |
-| **Navegación** | Expo Router v3 (Basado en archivos) |
+| **Navegación** | Expo Router (~57.0.13, basado en archivos) |
 | **Base de Datos Local** | SQLite mediante `expo-sqlite` |
 | **ORM Local** | Drizzle ORM (`drizzle-orm` + `drizzle-kit`) |
 | **Gestión de Estado Global** | Zustand (`zustand`) |
@@ -81,7 +81,7 @@ Con una interfaz ultramoderna, soporte para gestos táctiles, transmisión de ub
 | **Gráficos y Tarjetas QR** | `@shopify/react-native-skia` + `react-native-qrcode-svg` |
 | **Parsing Telefónico** | `libphonenumber-js` |
 | **Servicios Nativos Expo** | `expo-location`, `expo-contacts`, `expo-clipboard`, `expo-notifications`, `expo-sharing`, `expo-secure-store`, `expo-haptics` |
-| **Testing & Calidad** | Jest (`jest-expo`) + TypeScript 5 |
+| **Testing & Calidad** | Jest (`jest-expo`) + TypeScript 6 (`~6.0.3`) |
 
 ---
 
