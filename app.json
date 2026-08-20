@@ -92,7 +92,7 @@
           "locationAlwaysAndWhenInUsePermission": "Wasapea.me mantiene la ubicación activa solo durante una transmisión en vivo que tú inicias.",
           "motionUsagePermission": false,
           "isIosBackgroundLocationEnabled": true,
-          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidBackgroundLocationEnabled": false,
           "isAndroidForegroundServiceEnabled": true,
           "isAndroidMotionActivityEnabled": false
         }
